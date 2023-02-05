@@ -30,7 +30,13 @@ fun main(args: Array<String>) {
         printHelpMessage()
         exit(ExitCode.NORMAL.value)
     }
+    //Parse runtime configure
+    val config = parseConfig(args)
+    //Start up
+    FanboxD(config)
+}
 
+private fun parseConfig(args: Array<String>): Config {
     //Handle args
     var currentState = ArgState.WAIT_FOR_ARG
     var configFilePath = "./config.json".toPath()
@@ -130,7 +136,7 @@ fun main(args: Array<String>) {
         }
     }
 
-    var config: Config?=null
+    var config: Config? = null
     if (cmdLineArgs.asDamon != null && cmdLineArgs.downloadFanbox != null && cmdLineArgs.downloadDir != null && cmdLineArgs.fanboxSessionId != null) {
         with(cmdLineArgs) {
             config = Config(fanboxSessionId!!, asDamon!!, downloadFanbox!!, downloadDir = downloadDir!!)
@@ -161,9 +167,7 @@ fun main(args: Array<String>) {
             exit(ExitCode.WRONG_OPTION.value)
         }
     }
-
-    //Start up
-    FanboxD(config!!)
+    return config!!
 }
 
 private enum class ArgState {
