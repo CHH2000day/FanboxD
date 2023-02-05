@@ -155,3 +155,4 @@ replay_pid*
 gradle.properties
 noSync
 .idea
+!gradle/wrapper/gradle-wrapper.jar
