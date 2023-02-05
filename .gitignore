@@ -156,3 +156,4 @@ gradle.properties
 noSync
 .idea
 !gradle/wrapper/gradle-wrapper.jar
+config.json
