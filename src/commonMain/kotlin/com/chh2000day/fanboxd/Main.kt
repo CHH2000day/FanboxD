@@ -70,7 +70,7 @@ private fun parseConfig(args: Array<String>): Config {
                         cmdLineArgs.asDamon = true
                     }
 
-                    "--no-daemon " -> {
+                    "--no-daemon" -> {
                         cmdLineArgs.asDamon = false
                     }
 
