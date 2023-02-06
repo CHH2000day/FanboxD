@@ -27,8 +27,8 @@ import kotlinx.serialization.modules.polymorphic
  * @Author CHH2000day
  * @Date 2023/2/5 22:16
  **/
-val serializerModule= SerializersModule {
-    polymorphic(PostContentBody::class){
+val serializerModule = SerializersModule {
+    polymorphic(PostContentBody::class) {
         this.defaultDeserializer {
             PostContentBodySerializer
         }
@@ -37,4 +37,5 @@ val serializerModule= SerializersModule {
 val json = Json {
     ignoreUnknownKeys = true
     prettyPrint = true
+    serializersModule = serializerModule
 }
