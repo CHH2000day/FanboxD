@@ -27,11 +27,12 @@ jobs:
           distribution: 'temurin'
           server-id: github # Value of the distributionManagement/repository/id field of the pom.xml
           settings-path: ${{ github.workspace }} # location for the settings.xml file
-
+      - name: Make gradlew executable
+        run: chmod +x gradlew
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v2.3.3
         with:
-          arguments: linkDebugExecutableLinuxX64
+          arguments: linkReleaseExecutableLinuxX64
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
@@ -57,7 +58,7 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v2.3.3
         with:
-          arguments: linkDebugExecutableLinuxX64
+          arguments: linkReleaseExecutableLinuxX64
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
