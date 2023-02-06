@@ -60,7 +60,7 @@ jobs:
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v2.3.3
         with:
-          arguments: linkReleaseExecutableLinuxX64
+          arguments: linkReleaseExecutableMingwX64
 
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
