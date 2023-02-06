@@ -40,6 +40,7 @@ fun main(args: Array<String>) {
 }
 
 fun stopFanboxD() {
+    logger.info { "Shutting down FanboxD" }
     fanboxDInstance.stop()
 }
 

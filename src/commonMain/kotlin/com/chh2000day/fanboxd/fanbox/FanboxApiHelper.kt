@@ -16,7 +16,13 @@
 
 package com.chh2000day.fanboxd.fanbox
 
+import com.chh2000day.fanboxd.fanbox.struct.CreatorPosts
+import com.chh2000day.fanboxd.fanbox.struct.CreatorPostsUrls
+import com.chh2000day.fanboxd.fanbox.struct.SupportingCreators
+import com.chh2000day.fanboxd.fanbox.struct.post.Post
 import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
@@ -39,6 +45,9 @@ object FanboxApiHelper {
      * Actual interval between two api calls is [baseInterval]+[maxAdditionalInterval]
      */
     private const val maxAdditionalInterval = 500
+
+    private const val SUPPORTING_CREATORS_URL = "https://api.fanbox.cc/plan.listSupporting"
+
     private lateinit var httpClient: HttpClient
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -47,7 +56,7 @@ object FanboxApiHelper {
     private val tokenChannel = Channel<Long>(3, BufferOverflow.DROP_OLDEST)
     private val random = Random.Default
     internal fun init(fanboxSessionId: String) {
-        httpClient = createHttpClient(fanboxSessionId, CLIENT_TYPE.TYPE_API)
+        httpClient = createHttpClient(fanboxSessionId, ClientType.TYPE_API)
         coroutineScope.launch {
             var counter = 0L
             //Add some tokens to prevent a slow start-up
@@ -67,9 +76,28 @@ object FanboxApiHelper {
         tokenChannel.receive()
     }
 
-    suspend fun getAllSubscribedUsers() = withContext(coroutineContext) {
+    suspend fun getSupportingCreators(): SupportingCreators = withContext(coroutineContext) {
         //Obtain token
-        tokenChannel.receive()
+        obtainToken()
+        return@withContext httpClient.get(SUPPORTING_CREATORS_URL).body<SupportingCreators>()
+    }
+
+    suspend fun getCreatorPostsList(creatorId: String): CreatorPostsUrls = withContext(coroutineContext) {
+        //Obtain token
+        obtainToken()
+        return@withContext httpClient.get("https://api.fanbox.cc/post.paginateCreator?creatorId=$creatorId")
+            .body<CreatorPostsUrls>()
+    }
+
+    suspend fun getCreatorPosts(pageUrl: String): CreatorPosts = withContext(coroutineContext) {
+        //Obtain token
+        obtainToken()
+        return@withContext httpClient.get(pageUrl).body()
+    }
+
+    suspend fun getPost(postId: String): Post = withContext(coroutineContext) {
+        obtainToken()
+        return@withContext httpClient.get("https://api.fanbox.cc/post.info?postId=$postId").body()
     }
 
     fun stop() {
