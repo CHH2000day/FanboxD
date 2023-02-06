@@ -14,12 +14,11 @@
  *    limitations under the License.
  */
 
-package com.chh2000day.fanboxd.enum
+package com.chh2000day.fanboxd
 
 /**
  * @Author CHH2000day
- * @Date 2023/2/5 20:48
+ * @Date 2023/2/6 0:25
  **/
-enum class ExitCode(val value: Int) {
-    NORMAL(0), WRONG_OPTION(1),KILL(5), RUNTIME_ERR(10)
-}
+
+expect fun setTerminateHandler()

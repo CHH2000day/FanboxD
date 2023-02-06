@@ -14,12 +14,27 @@
  *    limitations under the License.
  */
 
-package com.chh2000day.fanboxd.enum
+package com.chh2000day.fanboxd
+
+import com.chh2000day.fanboxd.enum.ExitCode
+import kotlinx.cinterop.staticCFunction
+import platform.posix.SIGINT
+import platform.posix.SIGKILL
+import platform.posix.exit
+import platform.posix.signal
 
 /**
  * @Author CHH2000day
- * @Date 2023/2/5 20:48
+ * @Date 2023/2/6 0:04
  **/
-enum class ExitCode(val value: Int) {
-    NORMAL(0), WRONG_OPTION(1),KILL(5), RUNTIME_ERR(10)
+actual fun setTerminateHandler() {
+    signal(SIGINT, staticCFunction(::stopCallBack))
+    signal(SIGKILL, staticCFunction(::emerStopCallback))
+}
+
+fun stopCallBack(signal:Int) {
+    stopFanboxD()
+}
+fun emerStopCallback(signal:Int){
+    exit(ExitCode.KILL.value)
 }

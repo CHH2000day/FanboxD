@@ -25,15 +25,22 @@ import okio.Path.Companion.toPath
 import okio.buffer
 import platform.posix.exit
 
+lateinit var fanboxDInstance: FanboxD
 fun main(args: Array<String>) {
     if (args.contains("--help")) {
         printHelpMessage()
         exit(ExitCode.NORMAL.value)
     }
+    setTerminateHandler()
     //Parse runtime configure
     val config = parseConfig(args)
     //Start up
-    FanboxD(config)
+    fanboxDInstance = FanboxD(config)
+    fanboxDInstance.start()
+}
+
+fun stopFanboxD() {
+    fanboxDInstance.stop()
 }
 
 private fun parseConfig(args: Array<String>): Config {
@@ -83,7 +90,7 @@ private fun parseConfig(args: Array<String>): Config {
                     }
 
                     else -> {
-                        println("Unknown option :$arg")
+                        logger.error { "Unknown option :$arg" }
                         exit(ExitCode.WRONG_OPTION.value)
                     }
                 }

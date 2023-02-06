@@ -18,6 +18,10 @@ package com.chh2000day.fanboxd.fanbox
 
 import com.chh2000day.fanboxd.Config
 import io.ktor.client.*
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.newFixedThreadPoolContext
+import kotlinx.coroutines.runBlocking
+import platform.posix.usleep
 
 /**
  * @Author CHH2000day
@@ -25,8 +29,21 @@ import io.ktor.client.*
  **/
 class FanboxD(private val config: Config) {
     private val httpClient: HttpClient = createHttpClient(config.fanboxSessionId,CLIENT_TYPE.TYPE_DOWNLOADER)
+    private val coroutineContext= newFixedThreadPoolContext(2,"FanboxD Worker")
     init{
         FanboxApiHelper.init(config.fanboxSessionId)
+    }
+    fun start(){
+        runBlocking(coroutineContext) {
+
+        }
+    }
+
+    fun stop() {
+        coroutineContext.cancel()
+        FanboxApiHelper.stop()
+        //Sleep for 50 ms to allow everything goes
+        usleep(50_000)
     }
 
 }
