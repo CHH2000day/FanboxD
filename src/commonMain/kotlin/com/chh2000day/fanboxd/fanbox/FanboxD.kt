@@ -89,13 +89,14 @@ class FanboxD(private val config: Config) {
             logger.error { "Could not get supporting creators.Aborting download" }
             return
         }
-        val jobList = mutableListOf<Deferred<Result>>()
+        val resultList = mutableListOf<Result>()
         for (creator in supportingCreators.creatorInfos) {
-            jobList.add(coroutineScope.async {
+            val result = coroutineScope.async {
                 downloadCreator(creator.creatorId)
-            })
+            }.await()
+            resultList.add(result)
         }
-        val result = jobList.awaitAll().getResult()
+        val result = resultList.getResult()
         logger.info { "All downloads done!Result is " + result.result }
     }
 
@@ -196,7 +197,7 @@ class FanboxD(private val config: Config) {
         //Download other things
         //Cover
         val coverUrl = postsBody.coverImageUrl
-        if (coverUrl!=null){
+        if (coverUrl != null) {
             logger.info { "Post:$postId:Downloading cover" }
             coroutineScope.launch { downloadFile(coverUrl, postDir, postId, "cover.png") }
         }
