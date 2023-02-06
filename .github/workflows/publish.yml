@@ -29,6 +29,8 @@ jobs:
           settings-path: ${{ github.workspace }} # location for the settings.xml file
       - name: Make gradlew executable
         run: chmod +x gradlew
+      - name: Install curl
+        run: sudo apt-get update&&sudo apt-get -y install curl
       - name: Build with Gradle
         uses: gradle/gradle-build-action@v2.3.3
         with:
