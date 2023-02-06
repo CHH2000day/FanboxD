@@ -14,27 +14,17 @@
  *    limitations under the License.
  */
 
-package com.chh2000day.fanboxd
+package com.chh2000day.fanboxd.fanbox.struct
 
-import com.chh2000day.fanboxd.fanbox.struct.post.PostContentBody
-import com.chh2000day.fanboxd.fanbox.struct.post.PostContentBodySerializer
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-
-/**
- * @Author CHH2000day
- * @Date 2023/2/5 22:16
- **/
-val serializerModule= SerializersModule {
-    polymorphic(PostContentBody::class){
-        this.defaultDeserializer {
-            PostContentBodySerializer
-        }
-    }
-}
-val json = Json {
-    ignoreUnknownKeys = true
-    prettyPrint = true
-}
+@Serializable
+data class FanboxUser(
+    @SerialName("userId")
+    val userId: String,
+    @SerialName("name")
+    val name: String,
+    @SerialName("iconUrl")
+    val iconUrl: String
+)

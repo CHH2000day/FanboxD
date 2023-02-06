@@ -14,27 +14,22 @@
  *    limitations under the License.
  */
 
-package com.chh2000day.fanboxd
-
-import com.chh2000day.fanboxd.fanbox.struct.post.PostContentBody
-import com.chh2000day.fanboxd.fanbox.struct.post.PostContentBodySerializer
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.polymorphic
+package com.chh2000day.fanboxd.fanbox.struct.post
 
 
-/**
- * @Author CHH2000day
- * @Date 2023/2/5 22:16
- **/
-val serializerModule= SerializersModule {
-    polymorphic(PostContentBody::class){
-        this.defaultDeserializer {
-            PostContentBodySerializer
-        }
-    }
-}
-val json = Json {
-    ignoreUnknownKeys = true
-    prettyPrint = true
-}
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class Block(
+    @SerialName("type")
+    val type: String,
+    @SerialName("text")
+    val text: String? = null,
+    @SerialName("imageId")
+    val imageId: String? = null,
+    @SerialName("styles")
+    val styles: List<Style>? = null,
+    @SerialName("fileId")
+    val fileId: String? = null
+)
