@@ -84,12 +84,18 @@ object FanboxApiHelper {
 
     private suspend fun <T : FanboxResult> getValidResult(block: suspend () -> T): T? {
         var errCounter = 0
-        var result = block()
-        while (result.hasError && errCounter < maxRetries) {
+        var result = kotlin.runCatching { block() }.onFailure {
+            logger.error { "Failed to access fanbox api:" }
+            logger.error { it }
+        }.getOrNull()
+        while (result == null || result.hasError && errCounter < maxRetries) {
             logger.warn { "Getting error from fanbox api.Consider to check your fanbox session id" }
-            logger.warn { "Fanbox api error:${result.error}" }
+            logger.warn { "Fanbox api error:${result?.error}" }
             errCounter++
-            result = block()
+            result = kotlin.runCatching { block() }.onFailure {
+                logger.error { "Failed to access fanbox api:" }
+                logger.error { it }
+            }.getOrNull()
         }
         if (result.hasError) {
             logger.error { "Getting errors multiple time from fanbox api.Consider to check your fanbox session id" }
@@ -101,7 +107,7 @@ object FanboxApiHelper {
     private suspend fun doGetSupportingCreators(): SupportingCreators = withContext(coroutineContext) {
         //Obtain token
         obtainToken()
-        return@withContext httpClient.get(SUPPORTING_CREATORS_URL).body<SupportingCreators>()
+        return@withContext httpClient.get(SUPPORTING_CREATORS_URL).body()
     }
 
     suspend fun getSupportingCreators(): SupportingCreators? = withContext(coroutineContext) {
