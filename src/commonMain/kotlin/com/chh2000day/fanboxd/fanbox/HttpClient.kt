@@ -16,9 +16,11 @@
 
 package com.chh2000day.fanboxd.fanbox
 
+import com.chh2000day.fanboxd.json
 import io.ktor.client.*
 import io.ktor.client.engine.*
 import io.ktor.client.plugins.*
+import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.request.*
 import io.ktor.http.*
@@ -61,6 +63,9 @@ internal fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCustomSetting
     install(HttpRequestRetry) {
         retryOnServerErrors(maxRetries = 5)
         exponentialDelay()
+    }
+    install(ContentNegotiation) {
+        json
     }
 }
 

@@ -20,7 +20,8 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SupportingCreators(@SerialName("body") val creatorInfos: List<SupportingCreatorInfo>?, val error: String?) {
-    val hasError
-        get() = error != null
+data class SupportingCreators(
+    @SerialName("body") val creatorInfos: List<SupportingCreatorInfo>,
+    override val error: String? = null
+) : FanboxResult() {
 }

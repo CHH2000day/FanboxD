@@ -17,11 +17,12 @@
 package com.chh2000day.fanboxd.fanbox.struct.post
 
 
+import com.chh2000day.fanboxd.fanbox.struct.FanboxResult
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class Post(
     @SerialName("body")
-    val postBody: PostBody
-)
+    val postBody: PostBody, override val error: String?
+) : FanboxResult()

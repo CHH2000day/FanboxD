@@ -16,13 +16,16 @@
 
 package com.chh2000day.fanboxd.fanbox.struct
 
-
-import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+
+/**
+ * @Author CHH2000day
+ * @Date 2023/2/6 16:36
+ **/
 @Serializable
-data class CreatorPosts(
-    @SerialName("body")
-    val creatorPostsBody: CreatorPostsBody,
-    override val error: String? = null
-) : FanboxResult()
+abstract class FanboxResult() {
+    abstract val error: String?
+    val hasError
+        get() = error != null
+}

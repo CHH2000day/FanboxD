@@ -18,8 +18,12 @@ package com.chh2000day.fanboxd.fanbox
 
 import com.chh2000day.fanboxd.fanbox.struct.CreatorPosts
 import com.chh2000day.fanboxd.fanbox.struct.CreatorPostsUrls
+import com.chh2000day.fanboxd.fanbox.struct.FanboxResult
 import com.chh2000day.fanboxd.fanbox.struct.SupportingCreators
 import com.chh2000day.fanboxd.fanbox.struct.post.Post
+import com.chh2000day.fanboxd.fanbox.struct.post.PostWithOriginalContent
+import com.chh2000day.fanboxd.json
+import com.chh2000day.fanboxd.logger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -45,6 +49,8 @@ object FanboxApiHelper {
      * Actual interval between two api calls is [baseInterval]+[maxAdditionalInterval]
      */
     private const val maxAdditionalInterval = 500
+
+    private const val maxRetries = 3
 
     private const val SUPPORTING_CREATORS_URL = "https://api.fanbox.cc/plan.listSupporting"
 
@@ -76,28 +82,62 @@ object FanboxApiHelper {
         tokenChannel.receive()
     }
 
-    suspend fun getSupportingCreators(): SupportingCreators = withContext(coroutineContext) {
+    private suspend fun <T : FanboxResult> getValidResult(block: suspend () -> T): T? {
+        var errCounter = 0
+        var result = block()
+        while (result.hasError && errCounter < maxRetries) {
+            logger.warn { "Getting error from fanbox api.Consider to check your fanbox session id" }
+            logger.warn { "Fanbox api error:${result.error}" }
+            errCounter++
+            result = block()
+        }
+        if (result.hasError) {
+            logger.error { "Getting errors multiple time from fanbox api.Consider to check your fanbox session id" }
+            return null
+        }
+        return result
+    }
+
+    private suspend fun doGetSupportingCreators(): SupportingCreators = withContext(coroutineContext) {
         //Obtain token
         obtainToken()
         return@withContext httpClient.get(SUPPORTING_CREATORS_URL).body<SupportingCreators>()
     }
 
-    suspend fun getCreatorPostsList(creatorId: String): CreatorPostsUrls = withContext(coroutineContext) {
+    suspend fun getSupportingCreators(): SupportingCreators? = withContext(coroutineContext) {
+        return@withContext getValidResult { doGetSupportingCreators() }
+    }
+
+    private suspend fun doGetCreatorPostsList(creatorId: String): CreatorPostsUrls = withContext(coroutineContext) {
         //Obtain token
         obtainToken()
         return@withContext httpClient.get("https://api.fanbox.cc/post.paginateCreator?creatorId=$creatorId")
             .body<CreatorPostsUrls>()
     }
 
-    suspend fun getCreatorPosts(pageUrl: String): CreatorPosts = withContext(coroutineContext) {
+    suspend fun getCreatorPostsList(creatorId: String): CreatorPostsUrls? = withContext(coroutineContext) {
+        return@withContext getValidResult { doGetCreatorPostsList(creatorId) }
+    }
+
+    private suspend fun doGetCreatorPosts(pageUrl: String): CreatorPosts = withContext(coroutineContext) {
         //Obtain token
         obtainToken()
         return@withContext httpClient.get(pageUrl).body()
     }
 
-    suspend fun getPost(postId: String): Post = withContext(coroutineContext) {
+    suspend fun getCreatorPosts(pageUrl: String): CreatorPosts? = withContext(coroutineContext) {
+        return@withContext getValidResult { doGetCreatorPosts(pageUrl) }
+    }
+
+    private suspend fun doGetPost(postId: String): PostWithOriginalContent = withContext(coroutineContext) {
         obtainToken()
-        return@withContext httpClient.get("https://api.fanbox.cc/post.info?postId=$postId").body()
+        val content = httpClient.get("https://api.fanbox.cc/post.info?postId=$postId").body<String>()
+        val post = json.decodeFromString(Post.serializer(), content)
+        return@withContext PostWithOriginalContent(post, content, post.error)
+    }
+
+    suspend fun getPost(postId: String): PostWithOriginalContent? = withContext(coroutineContext) {
+        return@withContext getValidResult { doGetPost(postId) }
     }
 
     fun stop() {

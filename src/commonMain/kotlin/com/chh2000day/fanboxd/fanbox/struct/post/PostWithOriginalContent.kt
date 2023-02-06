@@ -14,15 +14,15 @@
  *    limitations under the License.
  */
 
-package com.chh2000day.fanboxd.fanbox.struct
+package com.chh2000day.fanboxd.fanbox.struct.post
 
+import com.chh2000day.fanboxd.fanbox.struct.FanboxResult
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-
-@Serializable
-data class CreatorPosts(
-    @SerialName("body")
-    val creatorPostsBody: CreatorPostsBody,
-    override val error: String? = null
-) : FanboxResult()
+/**
+ * @Author CHH2000day
+ * @Date 2023/2/6 17:25
+ **/
+//A container that contains post object and original content before deserializing
+class PostWithOriginalContent(val post: Post, val originalContent: String, override val error: String?) :
+    FanboxResult() {
+}

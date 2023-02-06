@@ -20,7 +20,5 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CreatorPostsUrls(@SerialName("body") val pagedUrls: List<String>?, val error: String?){
-    val hasError
-        get() = error != null
-}
+data class CreatorPostsUrls(@SerialName("body") val pagedUrls: List<String>, override val error: String? = null) :
+    FanboxResult()
