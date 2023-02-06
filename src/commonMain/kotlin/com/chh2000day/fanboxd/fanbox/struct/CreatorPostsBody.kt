@@ -25,5 +25,5 @@ data class CreatorPostsBody(
     @SerialName("items")
     val creatorPostInfos: List<CreatorPostInfo>,
     @SerialName("nextUrl")
-    val nextUrl: String
+    val nextUrl: String?
 )

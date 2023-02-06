@@ -26,5 +26,5 @@ data class FanboxUser(
     @SerialName("name")
     val name: String,
     @SerialName("iconUrl")
-    val iconUrl: String
+    val iconUrl: String?
 )

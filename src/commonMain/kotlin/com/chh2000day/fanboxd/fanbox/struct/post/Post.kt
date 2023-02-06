@@ -24,5 +24,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Post(
     @SerialName("body")
-    val postBody: PostBody, override val error: String?
+    val postBody: PostBody, override val error: String? = null
 ) : FanboxResult()

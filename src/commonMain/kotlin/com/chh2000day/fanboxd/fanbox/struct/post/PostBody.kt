@@ -52,7 +52,7 @@ data class PostBody(
     @SerialName("type")
     val type: String,
     @SerialName("coverImageUrl")
-    val coverImageUrl: String,
+    val coverImageUrl: String?,
     @SerialName("body")
     val body: PostContentBody?,
     @SerialName("excerpt")

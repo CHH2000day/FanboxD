@@ -20,7 +20,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class SupportingCreatorInfo(
-    val coverImageUrl: String,
+    val coverImageUrl: String?,
     val fee: Int,
     val creatorId: String,
     val description: String,

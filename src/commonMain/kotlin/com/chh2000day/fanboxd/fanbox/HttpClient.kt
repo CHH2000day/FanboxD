@@ -24,6 +24,7 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.cookies.*
 import io.ktor.client.request.*
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 
 /**
  * @Author CHH2000day
@@ -65,7 +66,7 @@ internal fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCustomSetting
         exponentialDelay()
     }
     install(ContentNegotiation) {
-        json
+        this.json(json)
     }
 }
 
