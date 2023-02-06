@@ -196,7 +196,10 @@ class FanboxD(private val config: Config) {
         //Download other things
         //Cover
         val coverUrl = postsBody.coverImageUrl
-        coroutineScope.launch { downloadFile(coverUrl, postDir, postId, "cover.png") }
+        if (coverUrl!=null){
+            logger.info { "Post:$postId:Downloading cover" }
+            coroutineScope.launch { downloadFile(coverUrl, postDir, postId, "cover.png") }
+        }
         if (postsBody.body == null) {
             logger.warn { "No access permission to post:$postId" }
             return Result.FAILED
@@ -291,6 +294,8 @@ class FanboxD(private val config: Config) {
             }
             logger.error { it }
             return false
+        }.onSuccess {
+            logger.info { "File downloaded :$targetFile" }
         }
         return true
     }
