@@ -26,9 +26,9 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Config(
     val fanboxSessionId: String,
-    val asDamon: Boolean = true,
+    val asDaemon: Boolean = true,
     val downloadFanbox: Boolean = true,
-    val interval: Int = 180,
+    val interval: Long = 180,
     val downloadDir: String = "."
 )
 
