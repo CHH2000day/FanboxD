@@ -27,12 +27,13 @@ import io.ktor.http.*
  * @Author CHH2000day
  * @Date 2023/2/1 16:51
  **/
-expect fun createHttpClient(fanboxSessionId: String, clientType: CLIENT_TYPE): HttpClient
+expect fun createHttpClient(fanboxSessionId: String, clientType: ClientType): HttpClient
 internal fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCustomSettings(
     fanboxSessionId: String,
-    clientType: CLIENT_TYPE
+    clientType: ClientType
 ) {
     install(HttpCookies) {
+        @Suppress("SpellCheckingInspection")
         storage =
             ConstantCookiesStorage(
                 Cookie(name = "FANBOXSESSID", value = fanboxSessionId, domain = "fanbox.cc"),
@@ -43,7 +44,7 @@ internal fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCustomSetting
         agent = getUA()
     }
     install(DefaultRequest) {
-        if (clientType == CLIENT_TYPE.TYPE_API) {
+        if (clientType == ClientType.TYPE_API) {
             header("Accept", "application/json, text/plain, */*")
         } else {
             header("Accept", "*/*")
@@ -57,12 +58,17 @@ internal fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCustomSetting
         header("sec-fetch-mode", "cors")
         header("sec-fetch-site", "same-site")
     }
+    install(HttpRequestRetry) {
+        retryOnServerErrors(maxRetries = 5)
+        exponentialDelay()
+    }
 }
 
+@Suppress("SpellCheckingInspection")
 private fun getUA(): String {
     return listOf("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Safari/537.36").random()
 }
 
-enum class CLIENT_TYPE {
+enum class ClientType {
     TYPE_API, TYPE_DOWNLOADER
 }

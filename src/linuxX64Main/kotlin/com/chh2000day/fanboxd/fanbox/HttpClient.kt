@@ -23,7 +23,7 @@ import io.ktor.client.engine.curl.*
  * @Author CHH2000day
  * @Date 2023/2/1 16:51
  **/
-actual fun createHttpClient(fanboxSessionId: String, clientType: CLIENT_TYPE): HttpClient {
+actual fun createHttpClient(fanboxSessionId: String, clientType: ClientType): HttpClient {
     return HttpClient(Curl) {
         applyCustomSettings(fanboxSessionId,clientType)
     }
