@@ -65,5 +65,5 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: fanboxd-linux-${{github.ref_name}}-x86_64-release
+          name: fanboxd-mingw-${{github.ref_name}}-x86_64-release.exe
           path: build/bin/mingwX64/releaseExecutable/FanboxD.exe
