@@ -21,6 +21,7 @@ import com.chh2000day.fanboxd.StartupConfig
 import com.chh2000day.fanboxd.Version
 import com.chh2000day.fanboxd.enum.ExitCode
 import com.chh2000day.fanboxd.enum.LaunchMode
+import com.chh2000day.fanboxd.fanbox.struct.post.HtmlPostContentBody
 import com.chh2000day.fanboxd.fanbox.struct.post.JsonPostContentBody
 import io.ktor.client.*
 import io.ktor.client.request.*
@@ -236,14 +237,15 @@ class FanboxD(private val startupConfig: StartupConfig) {
             Logger.e { "No access permission to post:$postId" }
             return Result.FAILED
         }
+        val imagePath = postDir / "images"
+        val thumbnailPath = postDir / "thumbnails"
+        val filePath = postDir / "files"
         val contentBody = postsBody.body
         if (contentBody is JsonPostContentBody) {
             //Images
             val images = contentBody.imageMap?.values?.toMutableList() ?: mutableListOf()
             images += contentBody.images ?: emptyList()
             if (images.isNotEmpty()) {
-                val imagePath = postDir / "images"
-                val thumbnailPath = postDir / "thumbnails"
                 images.forEachIndexed { index, imageInfo ->
                     val imageName = "${imageInfo.id}.${imageInfo.extension}"
                     Logger.i { "Post:$postId:Downloading thumbnail:[${index + 1}/${images.size}] $imageName" }
@@ -272,7 +274,6 @@ class FanboxD(private val startupConfig: StartupConfig) {
             val files = contentBody.fileMap?.values?.toMutableList() ?: mutableListOf()
             files += contentBody.files ?: emptyList()
             if (files.isNotEmpty()) {
-                val filePath = postDir / "files"
                 files.forEachIndexed { index, fileInfo ->
                     val filename = "${fileInfo.id}.${fileInfo.extension}"
                     Logger.i { "Post:$postId:Downloading file:[${index + 1}/${files.size}] $filename" }
@@ -295,8 +296,42 @@ class FanboxD(private val startupConfig: StartupConfig) {
             }
             return result
         } else {
-            Logger.w { "Support for legacy posts are not ready yet.Won't download other contents" }
-            return Result.FAILED
+            contentBody as HtmlPostContentBody
+            Logger.w { "No implementation for legacy fanbox post yet" }
+            val thumbnails = contentBody.getThumbnailUrlList()
+            thumbnails.forEachIndexed { index, thumbnailUrl ->
+                Logger.i { "Post:$postId:Downloading image:[${index + 1}/${thumbnails.size}]" }
+                downloadTaskList.add(coroutineScope.async {
+                    downloadFile(
+                        thumbnailUrl,
+                        thumbnailPath,
+                        postId
+                    )
+                })
+            }
+            val images = contentBody.getFilesUrlList()
+            images.forEachIndexed { index, imageUrl ->
+                Logger.i { "Post:$postId:Downloading image:[${index + 1}/${images.size}]" }
+                downloadTaskList.add(coroutineScope.async {
+                    downloadFile(
+                        imageUrl,
+                        imagePath,
+                        postId,
+                    )
+                })
+            }
+            val files = contentBody.getFilesUrlList()
+            files.forEachIndexed { index, fileUrl ->
+                Logger.i { "Post:$postId:Downloading file:[${index + 1}/${files.size}] $fileUrl" }
+                downloadTaskList.add(coroutineScope.async {
+                    downloadFile(
+                        fileUrl,
+                        filePath,
+                        postId
+                    )
+                })
+            }
+            return Result.PARTLY_SUCCESS
         }
     }
 

@@ -48,6 +48,7 @@ data class JsonPostContentBody(
 @Serializable
 data class HtmlPostContentBody(val html: String) : PostContentBody() {
     fun getImageUrlList(): List<String> = TODO()
+    fun getThumbnailUrlList(): List<String> = TODO()
     fun getFilesUrlList(): List<String> = TODO()
 }
 
