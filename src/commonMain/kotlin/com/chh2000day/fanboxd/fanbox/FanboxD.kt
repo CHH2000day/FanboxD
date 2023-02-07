@@ -195,17 +195,17 @@ class FanboxD(private val config: Config) {
             }
         }
         //Download other things
+        val downloadTaskList = mutableListOf<Deferred<Boolean>>()
         //Cover
         val coverUrl = postsBody.coverImageUrl
         if (coverUrl != null) {
             logger.info { "Post:$postId:Downloading cover" }
-            coroutineScope.launch { downloadFile(coverUrl, postDir, postId, "cover.png") }
+            downloadTaskList.add(coroutineScope.async { downloadFile(coverUrl, postDir, postId, "cover.png") })
         }
         if (postsBody.body == null) {
             logger.warn { "No access permission to post:$postId" }
             return Result.FAILED
         }
-        val jobList = mutableListOf<Deferred<Boolean>>()
         val contentBody = postsBody.body
         if (contentBody is JsonPostContentBody) {
             //Images
@@ -216,7 +216,7 @@ class FanboxD(private val config: Config) {
                 images.forEachIndexed { index, imageInfo ->
                     val imageName = "${imageInfo.id}.${imageInfo.extension}"
                     logger.info { "Post:$postId:Downloading thumbnail:[${index + 1}/${images.size + 1}] $imageName" }
-                    jobList.add(coroutineScope.async {
+                    downloadTaskList.add(coroutineScope.async {
                         downloadFile(
                             imageInfo.thumbnailUrl,
                             thumbnailPath,
@@ -225,7 +225,7 @@ class FanboxD(private val config: Config) {
                         )
                     })
                     logger.info { "Post:$postId:Downloading image:[${index + 1}/${images.size + 1}] $imageName" }
-                    jobList.add(coroutineScope.async {
+                    downloadTaskList.add(coroutineScope.async {
                         downloadFile(
                             imageInfo.originalUrl,
                             imagePath,
@@ -244,13 +244,20 @@ class FanboxD(private val config: Config) {
                 files.forEachIndexed { index, fileInfo ->
                     val filename = "${fileInfo.id}.${fileInfo.extension}"
                     logger.info { "Post:$postId:Downloading file:[${index + 1}/${files.size + 1}] $filename" }
-                    jobList.add(coroutineScope.async { downloadFile(fileInfo.url, filePath, postId, filename) })
+                    downloadTaskList.add(coroutineScope.async {
+                        downloadFile(
+                            fileInfo.url,
+                            filePath,
+                            postId,
+                            filename
+                        )
+                    })
                 }
             } else {
                 logger.info { "No files for post $postId found,skipping it." }
             }
             //Wait for complete
-            val result = jobList.awaitAll().getResult()
+            val result = downloadTaskList.awaitAll().getResult()
             logger.info {
                 "Post:$postId:Done!Result is " + result.result
             }
