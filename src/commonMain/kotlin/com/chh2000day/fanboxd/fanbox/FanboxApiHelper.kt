@@ -16,6 +16,7 @@
 
 package com.chh2000day.fanboxd.fanbox
 
+import co.touchlab.kermit.Logger
 import com.chh2000day.fanboxd.fanbox.struct.CreatorPosts
 import com.chh2000day.fanboxd.fanbox.struct.CreatorPostsUrls
 import com.chh2000day.fanboxd.fanbox.struct.FanboxResult
@@ -23,7 +24,6 @@ import com.chh2000day.fanboxd.fanbox.struct.SupportingCreators
 import com.chh2000day.fanboxd.fanbox.struct.post.Post
 import com.chh2000day.fanboxd.fanbox.struct.post.PostWithOriginalContent
 import com.chh2000day.fanboxd.json
-import com.chh2000day.fanboxd.logger
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -85,20 +85,18 @@ object FanboxApiHelper {
     private suspend fun <T : FanboxResult> getValidResult(block: suspend () -> T): T? {
         var errCounter = 0
         var result = kotlin.runCatching { block() }.onFailure {
-            logger.error { "Failed to access fanbox api:" }
-            logger.error { it }
+            Logger.e(it) { "Failed to access fanbox api:" }
         }.getOrNull()
         while (result == null || result.hasError && errCounter < maxRetries) {
-            logger.warn { "Getting error from fanbox api.Consider to check your fanbox session id" }
-            logger.warn { "Fanbox api error:${result?.error}" }
+            Logger.w { "Getting error from fanbox api.Consider to check your fanbox session id" }
+            Logger.w { "Fanbox api error:${result?.error}" }
             errCounter++
             result = kotlin.runCatching { block() }.onFailure {
-                logger.error { "Failed to access fanbox api:" }
-                logger.error { it }
+                Logger.e(it) { "Failed to access fanbox api:" }
             }.getOrNull()
         }
         if (result.hasError) {
-            logger.error { "Getting errors multiple time from fanbox api.Consider to check your fanbox session id" }
+            Logger.e { "Getting errors multiple time from fanbox api.Consider to check your fanbox session id" }
             return null
         }
         return result
