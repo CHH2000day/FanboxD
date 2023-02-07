@@ -48,6 +48,8 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: build/bin/linuxX64/releaseExecutable/fanboxd-linux-${{github.ref_name}}-x86_64-release
+          draft: true
+          prerelease: true
 
   build-mingwX64:
     runs-on: windows-latest
@@ -81,3 +83,5 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: build/bin/mingwX64/releaseExecutable/fanboxd-mingw-${{github.ref_name}}-x86_64-release.exe
+          draft: true
+          prerelease: true
