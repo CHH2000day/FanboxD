@@ -63,7 +63,8 @@ kotlin {
                 implementation("io.ktor:ktor-client-content-negotiation:2.2.2")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:2.2.2")
                 implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0-RC")
-                implementation("io.github.microutils:kotlin-logging:3.0.5")
+                implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
+                implementation("co.touchlab:kermit:1.2.2")
             }
         }
         val commonTest by getting

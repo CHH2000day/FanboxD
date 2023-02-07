@@ -16,6 +16,7 @@
 
 package com.chh2000day.fanboxd
 
+import co.touchlab.kermit.Logger
 import com.chh2000day.fanboxd.enum.ExitCode
 import com.chh2000day.fanboxd.fanbox.FanboxD
 import kotlinx.serialization.SerializationException
@@ -31,6 +32,8 @@ fun main(args: Array<String>) {
         printHelpMessage()
         exit(ExitCode.NORMAL.value)
     }
+    Logger.setTag("FanboxD")
+    Logger.setLogWriters(LoggerWriterImpl())
     setTerminateHandler()
     //Parse runtime configure
     val config = parseConfig(args)
@@ -40,7 +43,7 @@ fun main(args: Array<String>) {
 }
 
 fun stopFanboxD() {
-    logger.info { "Shutting down FanboxD" }
+    Logger.i { "Shutting down FanboxD" }
     fanboxDInstance.stop()
 }
 
@@ -91,7 +94,7 @@ private fun parseConfig(args: Array<String>): Config {
                     }
 
                     else -> {
-                        logger.error { "Unknown option :$arg" }
+                        Logger.e { "Unknown option :$arg" }
                         exit(ExitCode.WRONG_OPTION.value)
                     }
                 }
@@ -103,8 +106,7 @@ private fun parseConfig(args: Array<String>): Config {
                         runCatching {
                             configFilePath = arg.toPath(true)
                         }.onFailure {
-                            logger.error { "Failed to parse configure: $arg" }
-                            logger.error { it }
+                            Logger.e(it) { "Failed to parse configure: $arg" }
                             exit(ExitCode.WRONG_OPTION.value)
                         }
                     }
@@ -117,7 +119,7 @@ private fun parseConfig(args: Array<String>): Config {
                         arg.toIntOrNull()?.let {
                             cmdLineArgs.interval = it
                         } ?: {
-                            logger.error { "Invalid interval:$arg" }
+                            Logger.e { "Invalid interval:$arg" }
                             exit(ExitCode.WRONG_OPTION.value)
                         }
                     }
@@ -127,14 +129,13 @@ private fun parseConfig(args: Array<String>): Config {
                             cmdLineArgs.downloadDir = arg
                             arg.toPath(true)
                         }.onFailure {
-                            logger.error { "Failed to parse download dir: $arg" }
-                            logger.error { it }
+                            Logger.e(it) { "Failed to parse download dir: $arg" }
                             exit(ExitCode.WRONG_OPTION.value)
                         }
                     }
 
                     null -> {
-                        logger.error { "Illegal state" }
+                        Logger.e { "Illegal state" }
                         exit(ExitCode.RUNTIME_ERR.value)
                     }
                 }
@@ -159,17 +160,15 @@ private fun parseConfig(args: Array<String>): Config {
         }.onFailure {
             when (it) {
                 is IOException -> {
-                    logger.error { "Failed to read config file" }
-                    logger.error { it }
+                    Logger.e(it) { "Failed to read config file" }
                 }
 
                 is SerializationException -> {
-                    logger.error { "Failed to parse config file" }
-                    logger.error { it }
+                    Logger.e(it) { "Failed to parse config file" }
                 }
 
                 else -> {
-                    logger.error { it }
+                    Logger.e(it) { "Failed to create runtime config" }
                 }
             }
             exit(ExitCode.WRONG_OPTION.value)
