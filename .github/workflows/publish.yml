@@ -78,7 +78,7 @@ jobs:
           name: fanboxd-mingw-${{github.ref_name}}-x86_64-release.exe
           path: build/bin/mingwX64/releaseExecutable/FanboxD.exe
       - name: Copy bin for release
-        run: copy build/bin/mingwX64/releaseExecutable/FanboxD.kexe build/bin/mingwX64/releaseExecutable/fanboxd-mingw-${{github.ref_name}}-x86_64-release.exe
+        run: copy build/bin/mingwX64/releaseExecutable/FanboxD.exe build/bin/mingwX64/releaseExecutable/fanboxd-mingw-${{github.ref_name}}-x86_64-release.exe
       - name: Publish release
         uses: softprops/action-gh-release@v1
         with:
