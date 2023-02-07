@@ -295,15 +295,15 @@ class FanboxD(private val config: Config) {
         }.onFailure {
             logger.error {
                 "Download failed!" + if (postId != null) {
-                    "Post id:"
+                    "Post id:$postId."
                 } else {
                     ""
-                } + ".Url:$url"
+                } + "Url:$url"
             }
             logger.error { it }
             return false
         }.onSuccess {
-            logger.info { "File downloaded :$targetFile" }
+            logger.info { "File downloaded: $targetFile" }
         }
         return true
     }
