@@ -18,6 +18,7 @@ package com.chh2000day.fanboxd
 
 import co.touchlab.kermit.Logger
 import com.chh2000day.fanboxd.enum.ExitCode
+import com.chh2000day.fanboxd.enum.LaunchMode
 import com.chh2000day.fanboxd.fanbox.FanboxD
 import kotlinx.serialization.SerializationException
 import okio.FileSystem
@@ -48,12 +49,14 @@ fun stopFanboxD() {
     exit(ExitCode.NORMAL.value)
 }
 
-private fun parseConfig(args: Array<String>): Config {
+private fun parseConfig(args: Array<String>): StartupConfig {
     //Handle args
     var currentState = ArgState.WAIT_FOR_ARG
     var configFilePath = "./config.json".toPath()
     var lastOption: Options? = null
     val cmdLineArgs = NullableConfig()
+    var startMode = LaunchMode.NORMAL
+    var extraArgs: List<String>? = null
     for (arg in args) {
         when (currentState) {
             ArgState.WAIT_FOR_ARG -> {
@@ -79,11 +82,11 @@ private fun parseConfig(args: Array<String>): Config {
                     }
 
                     "--daemon" -> {
-                        cmdLineArgs.asDamon = true
+                        cmdLineArgs.asDaemon = true
                     }
 
                     "--no-daemon" -> {
-                        cmdLineArgs.asDamon = false
+                        cmdLineArgs.asDaemon = false
                     }
 
                     "--download-fanbox" -> {
@@ -94,6 +97,20 @@ private fun parseConfig(args: Array<String>): Config {
                         cmdLineArgs.downloadFanbox = false
                     }
 
+                    "--download-post" -> {
+                        startMode = LaunchMode.DOWNLOAD_POST
+                        currentState = ArgState.WAIT_FOR_PARAMETER
+                        cmdLineArgs.downloadFanbox = true
+                        cmdLineArgs.asDaemon = false
+                    }
+
+                    "--download-creator" -> {
+                        startMode = LaunchMode.DOWNLOAD_CREATOR
+                        currentState = ArgState.WAIT_FOR_PARAMETER
+                        cmdLineArgs.downloadFanbox = true
+                        cmdLineArgs.asDaemon = false
+                    }
+
                     else -> {
                         Logger.e { "Unknown option :$arg" }
                         exit(ExitCode.WRONG_OPTION.value)
@@ -102,6 +119,11 @@ private fun parseConfig(args: Array<String>): Config {
             }
 
             ArgState.WAIT_FOR_PARAMETER -> {
+                if (startMode != LaunchMode.NORMAL) {
+                    extraArgs = arg.split(',')
+                    currentState = ArgState.WAIT_FOR_ARG
+                    continue
+                }
                 when (lastOption) {
                     Options.CONFIG -> {
                         runCatching {
@@ -139,6 +161,9 @@ private fun parseConfig(args: Array<String>): Config {
                         Logger.e { "Illegal state" }
                         exit(ExitCode.RUNTIME_ERR.value)
                     }
+
+                    Options.DOWNLOAD_POSTS -> TODO()
+                    Options.DOWNLOAD_CREATORS -> TODO()
                 }
                 //Update state
                 currentState = ArgState.WAIT_FOR_ARG
@@ -146,36 +171,57 @@ private fun parseConfig(args: Array<String>): Config {
         }
     }
 
-    var config: Config? = null
-    if (cmdLineArgs.asDamon != null && cmdLineArgs.downloadFanbox != null && cmdLineArgs.downloadDir != null && cmdLineArgs.fanboxSessionId != null) {
-        with(cmdLineArgs) {
-            config = Config(fanboxSessionId!!, asDamon!!, downloadFanbox!!, downloadDir = downloadDir!!)
-        }
-    } else {
-        //Read conf if necessary
-        runCatching {
-            val configFileSource = FileSystem.SYSTEM.source(configFilePath).buffer()
-            val confString = configFileSource.readUtf8()
-            configFileSource.close()
-            config = json.decodeFromString(Config.serializer(), confString)
-        }.onFailure {
-            when (it) {
-                is IOException -> {
-                    Logger.e(it) { "Failed to read config file" }
+    val config: Config =
+        if (cmdLineArgs.asDaemon != null && cmdLineArgs.downloadFanbox != null && cmdLineArgs.downloadDir != null && cmdLineArgs.fanboxSessionId != null) {
+            with(cmdLineArgs) {
+                val conf = Config(fanboxSessionId!!, asDaemon!!, downloadFanbox!!, downloadDir = downloadDir!!)
+                cmdLineArgs.interval?.also {
+                    conf.interval = it.toLong()
                 }
-
-                is SerializationException -> {
-                    Logger.e(it) { "Failed to parse config file" }
-                }
-
-                else -> {
-                    Logger.e(it) { "Failed to create runtime config" }
-                }
+                conf
             }
-            exit(ExitCode.WRONG_OPTION.value)
+        } else {
+            //Read conf if necessary
+            runCatching {
+                val configFileSource = FileSystem.SYSTEM.source(configFilePath).buffer()
+                val confString = configFileSource.readUtf8()
+                configFileSource.close()
+                val fileConfig = json.decodeFromString(Config.serializer(), confString)
+                //Override config from file
+                cmdLineArgs.fanboxSessionId?.also {
+                    fileConfig.fanboxSessionId = it
+                }
+                cmdLineArgs.asDaemon?.also {
+                    fileConfig.asDaemon = it
+                }
+                cmdLineArgs.interval?.also {
+                    fileConfig.interval = it.toLong()
+                }
+                cmdLineArgs.downloadDir?.also {
+                    fileConfig.downloadDir = it
+                }
+                cmdLineArgs.downloadFanbox?.also {
+                    fileConfig.downloadFanbox = it
+                }
+                fileConfig
+            }.onFailure {
+                when (it) {
+                    is IOException -> {
+                        Logger.e(it) { "Failed to read config file" }
+                    }
+
+                    is SerializationException -> {
+                        Logger.e(it) { "Failed to parse config file" }
+                    }
+
+                    else -> {
+                        Logger.e(it) { "Failed to create runtime config" }
+                    }
+                }
+                exit(ExitCode.WRONG_OPTION.value)
+            }.getOrNull()!!
         }
-    }
-    return config!!
+    return StartupConfig(config, startMode, extraArgs ?: emptyList())
 }
 
 private enum class ArgState {
@@ -183,17 +229,25 @@ private enum class ArgState {
 }
 
 private enum class Options {
-    CONFIG, SESSION_ID, INTERVAL, DOWNLOAD_DIR
+    CONFIG, SESSION_ID, INTERVAL, DOWNLOAD_DIR, DOWNLOAD_POSTS, DOWNLOAD_CREATORS
 }
+
+class StartupConfig(val config: Config, val launchMode: LaunchMode, val extraArgs: List<String>)
 
 private fun printHelpMessage() {
     println("FanboxD version ${Version.versionName}")
     println(
         """
         Usage: fanboxd [OPTION]
+        
+        To launch in normal mode,the following parameters must be passed to this program via either command line arguments or config file.
+            'fanbox-session-id','download-dir','--daemon' or '--no-daemon','--download-fanbox' or '--no-download-fanbox'
+        
+        To download only specific posts/creators ,the following parameters must be passed to this program via command line.Only one type of jobs could be executed at a time.
+            'fanbox-session-id','download-dir'
         Options:
             --help                                          Show this help message.
-            --conf                  CONFIG_FILE             Read configuration from a file.Would be override by command line arguments.
+            --config                CONFIG_FILE             Read configuration from a file.Would be override by command line arguments.
             --fanbox-session-id     SESSIONID               Set fanbox sessionId.
             --daemon                                        Run as a daemon.
             --no-daemon                                     Don't run as a daemon.
@@ -201,6 +255,9 @@ private fun printHelpMessage() {
             --no-download-fanbox                            Don't download fanbox before start daemon.
             --interval              TIME(in sec)            Interval between two update queries.Only work when running daemon.
             --download-dir          DOWNLOAD_DIR            Specific where to store downloaded contents.
+        Extra download options(Only download specific content and would exit after that):
+            --download-post         <post(s)>               Download specific post(s).Exit after jobs done.
+            --download-creator      <creatorId(s)>          Download specific posts from specific creator(s).Exit after jobs done.
     """.trimIndent()
     )
 }

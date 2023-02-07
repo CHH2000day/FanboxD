@@ -17,9 +17,10 @@
 package com.chh2000day.fanboxd.fanbox
 
 import co.touchlab.kermit.Logger
-import com.chh2000day.fanboxd.Config
+import com.chh2000day.fanboxd.StartupConfig
 import com.chh2000day.fanboxd.Version
 import com.chh2000day.fanboxd.enum.ExitCode
+import com.chh2000day.fanboxd.enum.LaunchMode
 import com.chh2000day.fanboxd.fanbox.struct.post.JsonPostContentBody
 import io.ktor.client.*
 import io.ktor.client.request.*
@@ -39,11 +40,12 @@ import platform.posix.exit
  * @Author CHH2000day
  * @Date 2023/2/1 16:50
  **/
-class FanboxD(private val config: Config) {
+class FanboxD(private val startupConfig: StartupConfig) {
     /**
      * 16kB write buffer
      */
     private val bufferSize = 16 * 1024
+    private val config = startupConfig.config
     private val httpClient: HttpClient = createHttpClient(config.fanboxSessionId, ClientType.TYPE_DOWNLOADER)
     private val coroutineContext = newFixedThreadPoolContext(2, "FanboxD Worker")
     private val coroutineScope = CoroutineScope(coroutineContext)
@@ -82,16 +84,27 @@ class FanboxD(private val config: Config) {
 
     private suspend fun downloader() {
         Logger.i { "Starting downloader" }
-        Logger.i { "Getting supporting creators" }
-        val supportingCreators = FanboxApiHelper.getSupportingCreators()
-        if (supportingCreators == null) {
-            Logger.e { "Could not get supporting creators.Aborting download" }
+        if (startupConfig.launchMode == LaunchMode.DOWNLOAD_POST) {
+            Logger.i { "Download posts:${startupConfig.extraArgs.joinToString()}" }
+            downloadPosts(startupConfig.extraArgs)
             return
         }
+        val creatorIds: List<String> = if (startupConfig.launchMode == LaunchMode.DOWNLOAD_CREATOR) {
+            Logger.i { "Would download creators:${startupConfig.extraArgs.joinToString()}" }
+            startupConfig.extraArgs
+        } else {
+            Logger.i { "Getting supporting creators" }
+            val supportingCreators = FanboxApiHelper.getSupportingCreators()
+            if (supportingCreators == null) {
+                Logger.e { "Could not get supporting creators.Aborting download" }
+                return
+            }
+            supportingCreators.creatorInfos.map { it.creatorId }
+        }
         val resultList = mutableListOf<Result>()
-        for (creator in supportingCreators.creatorInfos) {
+        for (creatorId in creatorIds) {
             val result = coroutineScope.async {
-                downloadCreator(creator.creatorId)
+                downloadCreator(creatorId)
             }.await()
             resultList.add(result)
         }

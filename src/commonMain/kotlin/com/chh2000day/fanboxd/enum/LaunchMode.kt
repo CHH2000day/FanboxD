@@ -14,29 +14,12 @@
  *    limitations under the License.
  */
 
-package com.chh2000day.fanboxd
-
-import kotlinx.serialization.Serializable
+package com.chh2000day.fanboxd.enum
 
 /**
  * @Author CHH2000day
- * @Date 2023/2/5 19:59
+ * @Date 2023/2/7 19:48
  **/
-
-@Serializable
-data class Config(
-    var fanboxSessionId: String = "",
-    var asDaemon: Boolean = true,
-    var downloadFanbox: Boolean = true,
-    var interval: Long = 180,
-    var downloadDir: String = "."
-)
-
-@Serializable
-data class NullableConfig(
-    var fanboxSessionId: String? = null,
-    var asDaemon: Boolean? = null,
-    var downloadFanbox: Boolean? = null,
-    var interval: Int? = null,
-    var downloadDir: String? = null
-)
+enum class LaunchMode {
+    NORMAL,DOWNLOAD_POST,DOWNLOAD_CREATOR
+}
