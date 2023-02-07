@@ -27,6 +27,10 @@ import io.ktor.client.statement.*
 import io.ktor.utils.io.*
 import io.ktor.utils.io.core.*
 import kotlinx.coroutines.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -76,6 +80,7 @@ class FanboxD(private val config: Config) {
 
     fun stop() {
         coroutineContext.cancel()
+        coroutineScope.cancel()
         FanboxApiHelper.stop()
         //Sleep for 50 ms to allow everything goes
         usleep(50_000)
@@ -156,15 +161,27 @@ class FanboxD(private val config: Config) {
             return Result.FAILED
         }
         val postInfos = postLists.creatorPostsBody.creatorPostInfos
-        val resultList = mutableListOf<Deferred<Result>>()
+        val postIds = mutableListOf<String>()
         for (post in postInfos) {
-            resultList.add(coroutineScope.async { downloadPost(post.id) })
+            if (post.isRestricted) {
+                Logger.i { "No access to post${post.id} .Skipping it" }
+                continue
+            }
+            postIds.add(post.id)
         }
-        val result = resultList.awaitAll().getResult()
+        val result = downloadPosts(postIds)
         Logger.i {
             "Download done for page:$pageUrl .Result is " + result.result
         }
         return result
+    }
+
+    private suspend fun downloadPosts(postIds: List<String>): Result {
+        val resultList = mutableListOf<Deferred<Result>>()
+        for (postId in postIds) {
+            resultList.add(coroutineScope.async { downloadPost(postId) })
+        }
+        return resultList.awaitAll().getResult()
     }
 
     private suspend fun downloadPost(postId: String): Result {
@@ -178,19 +195,27 @@ class FanboxD(private val config: Config) {
         val postsBody = post.postBody
         val postDir = downloadDir / postsBody.creatorId / "posts" / postId
         kotlin.runCatching { fileSystem.createDirectories(postDir, false) }.onFailure {
-            Logger.e (it) { "Download post $post failed!Failed to create dir:$postDir" }
+            Logger.e(it) { "Download post $post failed!Failed to create dir:$postDir" }
             return Result.FAILED
         }
         //Write post content
         coroutineScope.launch {
             val postFile = postDir / "post.json"
+            val currentTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+            val origTimeString = currentTime.toString()
+            val currentTimeString = origTimeString.substring(0, origTimeString.lastIndexOf('.'))
+            val postFileWithTimeStamp = postDir / "post-$currentTimeString.json"
             kotlin.runCatching {
                 val sink = fileSystem.sink(postFile, false).buffer()
                 sink.use {
                     sink.writeUtf8(postComplex.originalContent)
                 }
+                val postWithTimeSink = fileSystem.sink(postFileWithTimeStamp, false).buffer()
+                postWithTimeSink.use {
+                    postWithTimeSink.writeUtf8(postComplex.originalContent)
+                }
             }.onFailure {
-                Logger.e (it) { "Failed to write post file : $postFile  for post :$postId" }
+                Logger.e(it) { "Failed to write post file : $postFile  for post :$postId" }
             }
         }
         //Download other things
@@ -214,7 +239,7 @@ class FanboxD(private val config: Config) {
                 val thumbnailPath = postDir / "thumbnails"
                 images.forEachIndexed { index, imageInfo ->
                     val imageName = "${imageInfo.id}.${imageInfo.extension}"
-                    Logger.i { "Post:$postId:Downloading thumbnail:[${index + 1}/${images.size + 1}] $imageName" }
+                    Logger.i { "Post:$postId:Downloading thumbnail:[${index + 1}/${images.size}] $imageName" }
                     downloadTaskList.add(coroutineScope.async {
                         downloadFile(
                             imageInfo.thumbnailUrl,
@@ -223,7 +248,7 @@ class FanboxD(private val config: Config) {
                             imageName
                         )
                     })
-                    Logger.i { "Post:$postId:Downloading image:[${index + 1}/${images.size + 1}] $imageName" }
+                    Logger.i { "Post:$postId:Downloading image:[${index + 1}/${images.size}] $imageName" }
                     downloadTaskList.add(coroutineScope.async {
                         downloadFile(
                             imageInfo.originalUrl,
@@ -242,7 +267,7 @@ class FanboxD(private val config: Config) {
                 val filePath = postDir / "files"
                 files.forEachIndexed { index, fileInfo ->
                     val filename = "${fileInfo.id}.${fileInfo.extension}"
-                    Logger.i { "Post:$postId:Downloading file:[${index + 1}/${files.size + 1}] $filename" }
+                    Logger.i { "Post:$postId:Downloading file:[${index + 1}/${files.size}] $filename" }
                     downloadTaskList.add(coroutineScope.async {
                         downloadFile(
                             fileInfo.url,
@@ -292,7 +317,7 @@ class FanboxD(private val config: Config) {
                 }
             }
         }.onFailure {
-            Logger.e (it) {
+            Logger.e(it) {
                 "Download failed!" + if (postId != null) {
                     "Post id:$postId."
                 } else {
@@ -306,8 +331,40 @@ class FanboxD(private val config: Config) {
         return true
     }
 
-    private suspend fun monitor() {
-        delay(config.interval)
+    private suspend fun monitor() = coroutineScope {
+        while (isActive) {
+            delay(500L)
+            val startTime = Clock.System.now()
+            coroutineScope.launch {
+                Logger.i { "Getting update from fanbox" }
+                val fanboxUpdateInfo = FanboxApiHelper.getFanboxUpdate()
+                if (fanboxUpdateInfo == null) {
+                    Logger.e { "Failed to get update from fanbox" }
+                    return@launch
+                }
+                val updatePostInfo = fanboxUpdateInfo.fanboxUpdateBody.fanboxUpdateInfos
+                val postsShouldUpdate = updatePostInfo.filter {
+                    it.fanboxUpdatePostInfo.updatedDatetime.toInstant() >= startTime
+                }
+                if (postsShouldUpdate.isEmpty()) {
+                    Logger.i { "No update available" }
+                } else {
+                    val postsList = postsShouldUpdate.filter { updateInfo ->
+                        updateInfo.fanboxUpdatePostInfo.isRestricted.also {
+                            if (!it) {
+                                Logger.i { "No access to post:${updateInfo.fanboxUpdatePostInfo.id}.Skipping it." }
+                            }
+                        }
+                    }.map {
+                        it.fanboxUpdatePostInfo.id
+                    }
+                    Logger.i { "Posts to download:${postsList.joinToString()}" }
+                    val result = downloadPosts(postsList)
+                    Logger.i { "Posts download result:${result.result}" }
+                }
+            }
+            delay(config.interval * 1000)
+        }
     }
 
     private enum class Result(val result: String) {

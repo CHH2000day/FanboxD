@@ -23,6 +23,7 @@ import com.chh2000day.fanboxd.fanbox.struct.creator.CreatorPostsUrls
 import com.chh2000day.fanboxd.fanbox.struct.creator.SupportingCreators
 import com.chh2000day.fanboxd.fanbox.struct.post.Post
 import com.chh2000day.fanboxd.fanbox.struct.post.PostWithOriginalContent
+import com.chh2000day.fanboxd.fanbox.struct.update.FanboxUpdate
 import com.chh2000day.fanboxd.json
 import io.ktor.client.*
 import io.ktor.client.call.*
@@ -142,6 +143,16 @@ object FanboxApiHelper {
 
     suspend fun getPost(postId: String): PostWithOriginalContent? = withContext(coroutineContext) {
         return@withContext getValidResult { doGetPost(postId) }
+    }
+
+    private suspend fun doGetFanboxUpdate(): FanboxUpdate = withContext(coroutineContext) {
+        obtainToken()
+        return@withContext httpClient.get("https://api.fanbox.cc/bell.list?page=1&skipConvertUnreadNotification=0&commentOnly=0 ")
+            .body()
+    }
+
+    suspend fun getFanboxUpdate(): FanboxUpdate? = withContext(coroutineContext) {
+        return@withContext getValidResult { doGetFanboxUpdate() }
     }
 
     fun stop() {

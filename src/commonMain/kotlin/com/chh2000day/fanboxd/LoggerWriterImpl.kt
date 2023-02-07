@@ -19,6 +19,8 @@ package com.chh2000day.fanboxd
 import co.touchlab.kermit.CommonWriter
 import co.touchlab.kermit.Severity
 import kotlinx.datetime.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import kotlin.time.ExperimentalTime
 
 /**
@@ -28,7 +30,7 @@ import kotlin.time.ExperimentalTime
 class LoggerWriterImpl : CommonWriter() {
     @OptIn(ExperimentalTime::class)
     override fun formatMessage(severity: Severity, message: String, tag: String, throwable: Throwable?): String {
-        val currentTime = Clock.System.now()
+        val currentTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
         val origTimeString = currentTime.toString()
         origTimeString.substring(0, origTimeString.lastIndexOf('.'))
         return origTimeString.substring(0, origTimeString.lastIndexOf('.')) + " " + super.formatMessage(
