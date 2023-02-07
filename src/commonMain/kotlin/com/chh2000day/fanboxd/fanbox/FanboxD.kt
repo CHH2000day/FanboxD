@@ -25,7 +25,6 @@ import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.utils.io.*
-import io.ktor.utils.io.core.*
 import kotlinx.coroutines.*
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -47,7 +46,7 @@ class FanboxD(private val config: Config) {
     /**
      * 16kB write buffer
      */
-    private val bufferSize = 16 * 1024L
+    private val bufferSize = 16 * 1024
     private val httpClient: HttpClient = createHttpClient(config.fanboxSessionId, ClientType.TYPE_DOWNLOADER)
     private val coroutineContext = newFixedThreadPoolContext(2, "FanboxD Worker")
     private val coroutineScope = CoroutineScope(coroutineContext)
@@ -177,11 +176,11 @@ class FanboxD(private val config: Config) {
     }
 
     private suspend fun downloadPosts(postIds: List<String>): Result {
-        val resultList = mutableListOf<Deferred<Result>>()
+        val resultList = mutableListOf<Result>()
         for (postId in postIds) {
-            resultList.add(coroutineScope.async { downloadPost(postId) })
+            resultList.add(coroutineScope.async { downloadPost(postId) }.await())
         }
-        return resultList.awaitAll().getResult()
+        return resultList.getResult()
     }
 
     private suspend fun downloadPost(postId: String): Result {
@@ -202,9 +201,8 @@ class FanboxD(private val config: Config) {
         coroutineScope.launch {
             val postFile = postDir / "post.json"
             val currentTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
-            val origTimeString = currentTime.toString()
-            val currentTimeString = origTimeString.substring(0, origTimeString.lastIndexOf('.'))
-            val postFileWithTimeStamp = postDir / "post-$currentTimeString.json"
+            val timeString = postsBody.updatedDatetime.replace(':', '-')
+            val postFileWithTimeStamp = postDir / "post-${timeString}.json"
             kotlin.runCatching {
                 val sink = fileSystem.sink(postFile, false).buffer()
                 sink.use {
@@ -214,6 +212,7 @@ class FanboxD(private val config: Config) {
                 postWithTimeSink.use {
                     postWithTimeSink.writeUtf8(postComplex.originalContent)
                 }
+                return@runCatching
             }.onFailure {
                 Logger.e(it) { "Failed to write post file : $postFile  for post :$postId" }
             }
@@ -306,15 +305,19 @@ class FanboxD(private val config: Config) {
         kotlin.runCatching {
             httpClient.prepareGet(url).execute { httpResponse ->
                 val channel: ByteReadChannel = httpResponse.bodyAsChannel()
+                val buffer = ByteArray(bufferSize)
+                var size = 0
                 val sink = fileSystem.sink(targetFile, false).buffer()
                 sink.use {
-                    while (!channel.isClosedForRead) {
-                        val packet = channel.readRemaining(bufferSize)
-                        while (packet.isNotEmpty) {
-                            sink.write(packet.readBytes())
-                        }
+                    while (!channel.isClosedForRead && channel.readAvailable(buffer, 0, bufferSize).also {
+                            size = it
+                        } >= 0) {
+                        sink.write(buffer, 0, size)
                     }
                 }
+                //This saves some memory.....
+                //Seems a 'FEATURE' of kotlin/native lol
+                return@execute
             }
         }.onFailure {
             Logger.e(it) {
