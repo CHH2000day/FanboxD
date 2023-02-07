@@ -33,10 +33,14 @@ data class JsonPostContentBody(
     val blocks: List<Block>? = null,
     @SerialName("imageMap")
     val imageMap: Map<String, ImageInfo>? = null,
+    @SerialName("images")
+    val images: List<ImageInfo>? = null,
     @SerialName("fileMap")
     val fileMap: Map<String, FileInfo>? = null,
+    @SerialName("files")
+    val files: List<FileInfo>? = null,
     @SerialName("embedMap")
-    val embedMap: Map<String,EmbedInfo>? = null,
+    val embedMap: Map<String, EmbedInfo>? = null,
     @SerialName("urlEmbedMap")
     val urlEmbedMap: UrlEmbedInfo? = null
 ) : PostContentBody()

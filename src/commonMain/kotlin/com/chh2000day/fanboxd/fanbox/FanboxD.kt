@@ -229,8 +229,9 @@ class FanboxD(private val config: Config) {
         val contentBody = postsBody.body
         if (contentBody is JsonPostContentBody) {
             //Images
-            val images = contentBody.imageMap?.values
-            if (images != null) {
+            val images = contentBody.imageMap?.values?.toMutableList() ?: mutableListOf()
+            images += contentBody.images ?: emptyList()
+            if (images.isNotEmpty()) {
                 val imagePath = postDir / "images"
                 val thumbnailPath = postDir / "thumbnails"
                 images.forEachIndexed { index, imageInfo ->
@@ -258,8 +259,9 @@ class FanboxD(private val config: Config) {
                 Logger.i { "No images for post $postId found,skipping it." }
             }
             //Files
-            val files = contentBody.fileMap?.values
-            if (files != null) {
+            val files = contentBody.fileMap?.values?.toMutableList() ?: mutableListOf()
+            files += contentBody.files ?: emptyList()
+            if (files.isNotEmpty()) {
                 val filePath = postDir / "files"
                 files.forEachIndexed { index, fileInfo ->
                     val filename = "${fileInfo.id}.${fileInfo.extension}"
