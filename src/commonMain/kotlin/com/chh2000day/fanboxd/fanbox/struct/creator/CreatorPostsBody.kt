@@ -14,19 +14,16 @@
  *    limitations under the License.
  */
 
-package com.chh2000day.fanboxd.fanbox.struct
+package com.chh2000day.fanboxd.fanbox.struct.creator
 
+
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class SupportingCreatorInfo(
-    val coverImageUrl: String?,
-    val fee: Int,
-    val creatorId: String,
-    val description: String,
-    val hasAdultContent: Boolean,
-    val paymentMethod: String,
-    val id: String,
-    val title: String,
-    val user: FanboxUser
+data class CreatorPostsBody(
+    @SerialName("items")
+    val creatorPostInfos: List<CreatorPostInfo>,
+    @SerialName("nextUrl")
+    val nextUrl: String?
 )

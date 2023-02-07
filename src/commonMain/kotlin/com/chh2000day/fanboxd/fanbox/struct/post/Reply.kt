@@ -17,7 +17,7 @@
 package com.chh2000day.fanboxd.fanbox.struct.post
 
 
-import com.chh2000day.fanboxd.fanbox.struct.FanboxUser
+import com.chh2000day.fanboxd.fanbox.struct.user.FanboxUser
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 

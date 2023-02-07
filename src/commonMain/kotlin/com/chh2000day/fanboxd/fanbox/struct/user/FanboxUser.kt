@@ -14,11 +14,17 @@
  *    limitations under the License.
  */
 
-package com.chh2000day.fanboxd.fanbox.struct
+package com.chh2000day.fanboxd.fanbox.struct.user
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class CreatorPostsUrls(@SerialName("body") val pagedUrls: List<String>, override val error: String? = null) :
-    FanboxResult()
+data class FanboxUser(
+    @SerialName("userId")
+    val userId: String,
+    @SerialName("name")
+    val name: String,
+    @SerialName("iconUrl")
+    val iconUrl: String?
+)

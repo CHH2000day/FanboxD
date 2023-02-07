@@ -14,9 +14,10 @@
  *    limitations under the License.
  */
 
-package com.chh2000day.fanboxd.fanbox.struct
+package com.chh2000day.fanboxd.fanbox.struct.creator
 
 
+import com.chh2000day.fanboxd.fanbox.struct.user.FanboxUser
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
