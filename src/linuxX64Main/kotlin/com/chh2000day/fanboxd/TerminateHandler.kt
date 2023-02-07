@@ -14,6 +14,8 @@
  *    limitations under the License.
  */
 
+@file:Suppress("UNUSED_PARAMETER")
+
 package com.chh2000day.fanboxd
 
 import com.chh2000day.fanboxd.enum.ExitCode
