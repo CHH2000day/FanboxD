@@ -34,7 +34,6 @@ import okio.Path.Companion.toPath
 import okio.buffer
 import okio.use
 import platform.posix.exit
-import platform.posix.usleep
 
 /**
  * @Author CHH2000day
@@ -79,8 +78,6 @@ class FanboxD(private val config: Config) {
         coroutineContext.cancel()
         coroutineScope.cancel()
         FanboxApiHelper.stop()
-        //Sleep for 50 ms to allow everything goes
-        usleep(50_000)
     }
 
     private suspend fun downloader() {

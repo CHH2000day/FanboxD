@@ -45,6 +45,7 @@ fun main(args: Array<String>) {
 fun stopFanboxD() {
     Logger.i { "Shutting down FanboxD" }
     fanboxDInstance.stop()
+    exit(ExitCode.NORMAL.value)
 }
 
 private fun parseConfig(args: Array<String>): Config {
