@@ -1,0 +1,7 @@
+{
+  "fanboxSessionId": "YOUR FANBOX SESSION ID",
+  "asDaemon": true,
+  "downloadFanbox": true,
+  "interval": 180,
+  "downloadDir": "./fanbox-download"
+}
