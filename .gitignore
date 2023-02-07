@@ -157,3 +157,4 @@ noSync
 .idea
 !gradle/wrapper/gradle-wrapper.jar
 config.json
+src/commonMain/kotlin/com/chh2000day/fanboxd/Version.kt
