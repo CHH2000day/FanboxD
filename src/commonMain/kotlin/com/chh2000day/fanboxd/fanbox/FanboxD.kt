@@ -139,11 +139,11 @@ class FanboxD(private val config: Config) {
             logger.error { "Could not get posts list for creator : $creatorId. Aborting download" }
             return Result.FAILED
         }
-        val resultList = mutableListOf<Deferred<Result>>()
+        val resultList = mutableListOf<Result>()
         for (pageUrl in pageLists.pagedUrls) {
-            resultList.add(coroutineScope.async { downloadWholePostsPage(pageUrl) })
+            resultList.add(coroutineScope.async { downloadWholePostsPage(pageUrl) }.await())
         }
-        val result = resultList.awaitAll().getResult()
+        val result = resultList.getResult()
         logger.info { "Download done for creator:$creatorId .Result is " + result.result }
         return result
     }
