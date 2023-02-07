@@ -11,14 +11,12 @@ on:
   push:
     tags:
       - "*.*.*"
-permissions:
-  contents: write
 
 jobs:
   build-linuxX64:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
@@ -54,7 +52,7 @@ jobs:
   build-mingwX64:
     runs-on: windows-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
 
     steps:
