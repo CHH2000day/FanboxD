@@ -27,9 +27,7 @@ import io.ktor.client.statement.*
 import io.ktor.utils.io.*
 import kotlinx.coroutines.*
 import kotlinx.datetime.Clock
-import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
-import kotlinx.datetime.toLocalDateTime
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -200,7 +198,6 @@ class FanboxD(private val config: Config) {
         //Write post content
         coroutineScope.launch {
             val postFile = postDir / "post.json"
-            val currentTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
             val timeString = postsBody.updatedDatetime.replace(':', '-')
             val postFileWithTimeStamp = postDir / "post-${timeString}.json"
             kotlin.runCatching {
