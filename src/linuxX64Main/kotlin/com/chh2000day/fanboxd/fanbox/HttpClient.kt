@@ -16,6 +16,7 @@
 
 package com.chh2000day.fanboxd.fanbox
 
+import co.touchlab.kermit.Logger
 import io.ktor.client.*
 import io.ktor.client.engine.curl.*
 
@@ -25,6 +26,12 @@ import io.ktor.client.engine.curl.*
  **/
 actual fun createHttpClient(fanboxSessionId: String, clientType: ClientType): HttpClient {
     return HttpClient(Curl) {
+        if (proxyConfig!=null) {
+            Logger.i{ "Using proxy $proxyConfig" }
+            engine {
+                proxy = proxyConfig
+            }
+        }
         applyCustomSettings(fanboxSessionId,clientType)
     }
 

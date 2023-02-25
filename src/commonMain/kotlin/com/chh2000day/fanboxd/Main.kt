@@ -20,12 +20,16 @@ import co.touchlab.kermit.Logger
 import com.chh2000day.fanboxd.enum.ExitCode
 import com.chh2000day.fanboxd.enum.LaunchMode
 import com.chh2000day.fanboxd.fanbox.FanboxD
+import com.chh2000day.fanboxd.fanbox.proxyConfig
+import io.ktor.client.engine.*
+import kotlinx.cinterop.toKString
 import kotlinx.serialization.SerializationException
 import okio.FileSystem
 import okio.IOException
 import okio.Path.Companion.toPath
 import okio.buffer
 import platform.posix.exit
+import platform.posix.getenv
 
 lateinit var fanboxDInstance: FanboxD
 fun main(args: Array<String>) {
@@ -38,7 +42,9 @@ fun main(args: Array<String>) {
     setTerminateHandler()
     //Parse runtime configure
     val config = parseConfig(args)
+    proxyConfig= parseProxyConfig(config.config.proxy)
     //Start up
+
     fanboxDInstance = FanboxD(config)
     fanboxDInstance.start()
 }
@@ -55,6 +61,7 @@ private fun parseConfig(args: Array<String>): StartupConfig {
     var configFilePath = "./config.json".toPath()
     var lastOption: Options? = null
     val cmdLineArgs = NullableConfig()
+    cmdLineArgs.proxy=getenv("https_proxy")?.toKString()
     var startMode = LaunchMode.NORMAL
     var extraArgs: List<String>? = null
     for (arg in args) {
@@ -110,6 +117,10 @@ private fun parseConfig(args: Array<String>): StartupConfig {
                         cmdLineArgs.downloadFanbox = true
                         cmdLineArgs.asDaemon = false
                     }
+                    "--proxy" -> {
+                        lastOption=Options.PROXY
+                        currentState = ArgState.WAIT_FOR_PARAMETER
+                    }
 
                     else -> {
                         Logger.e { "Unknown option :$arg" }
@@ -155,6 +166,9 @@ private fun parseConfig(args: Array<String>): StartupConfig {
                             Logger.e(it) { "Failed to parse download dir: $arg" }
                             exit(ExitCode.WRONG_OPTION.value)
                         }
+                    }
+                    Options.PROXY->{
+                        cmdLineArgs.proxy=arg
                     }
 
                     null -> {
@@ -203,6 +217,9 @@ private fun parseConfig(args: Array<String>): StartupConfig {
                 cmdLineArgs.downloadFanbox?.also {
                     fileConfig.downloadFanbox = it
                 }
+                cmdLineArgs.proxy?.also {
+                    fileConfig.proxy=it
+                }
                 fileConfig
             }.onFailure {
                 when (it) {
@@ -224,12 +241,46 @@ private fun parseConfig(args: Array<String>): StartupConfig {
     return StartupConfig(config, startMode, extraArgs ?: emptyList())
 }
 
+private fun parseProxyConfig(proxy:String?):ProxyConfig?{
+    if (proxy==null){
+        return null
+    }
+    val protocol:String
+    val host:String
+    val port:Int
+    val schemeSplitInfo=proxy.split("://", limit = 2)
+    if (schemeSplitInfo.size!=2){
+        Logger.e{"Failed to parse proxy:Could not determine protocol:$proxy"}
+        return null
+    }
+    protocol=schemeSplitInfo[0]
+    val hostInfo=schemeSplitInfo[1]
+    if (protocol.equals("http",true)){
+        return ProxyBuilder.http(proxy)
+    }
+    if (protocol.equals("socks5",true)){
+        val lastIndexOfColon=hostInfo.lastIndexOf(':')+1
+        if (lastIndexOfColon<1||lastIndexOfColon>=hostInfo.lastIndex){
+            Logger.e { "Could not determine port:$proxy" }
+            return null
+        }
+        host=hostInfo.substring(0,lastIndexOfColon)
+        val portStr=hostInfo.substring(lastIndexOfColon)
+        port=portStr.toIntOrNull()?:run{
+            Logger.e { "Failed to parse proxy:Invalid port:$portStr" }
+            return null
+        }
+        return ProxyBuilder.socks(host,port)
+    }
+    Logger.e { "Proxy protocol $protocol is not supported!" }
+    return null
+}
 private enum class ArgState {
     WAIT_FOR_ARG, WAIT_FOR_PARAMETER
 }
 
 private enum class Options {
-    CONFIG, SESSION_ID, INTERVAL, DOWNLOAD_DIR, DOWNLOAD_POSTS, DOWNLOAD_CREATORS
+    CONFIG, SESSION_ID, INTERVAL, DOWNLOAD_DIR, DOWNLOAD_POSTS, DOWNLOAD_CREATORS,PROXY
 }
 
 class StartupConfig(val config: Config, val launchMode: LaunchMode, val extraArgs: List<String>)
@@ -255,6 +306,7 @@ private fun printHelpMessage() {
             --no-download-fanbox                            Don't download fanbox before start daemon.
             --interval              TIME(in sec)            Interval between two update queries.Only work when running daemon.
             --download-dir          DOWNLOAD_DIR            Specific where to store downloaded contents.
+            --proxy                 PROXY_SERVER            Specific a proxy server
         Extra download options(Only download specific content and would exit after that):
             --download-post         <post(s)>               Download specific post(s).Exit after jobs done.
             --download-creator      <creatorId(s)>          Download specific posts from specific creator(s).Exit after jobs done.

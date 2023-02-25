@@ -16,7 +16,9 @@
 
 package com.chh2000day.fanboxd.fanbox
 
+import co.touchlab.kermit.Logger
 import io.ktor.client.*
+import io.ktor.client.engine.*
 import io.ktor.client.engine.winhttp.*
 
 /**
@@ -25,6 +27,18 @@ import io.ktor.client.engine.winhttp.*
  **/
 actual fun createHttpClient(fanboxSessionId: String,clientType: ClientType): HttpClient {
     return HttpClient(WinHttp) {
+        //To avoid problem with mutability
+        val mProxyConfig=proxyConfig
+        if (mProxyConfig!=null) {
+            if (mProxyConfig.type==ProxyType.SOCKS){
+                Logger.w{"Socks5 proxy on Windows is not supported yet"}
+            }else {
+                Logger.i { "Using proxy $mProxyConfig" }
+                engine {
+                    proxy = mProxyConfig
+                }
+            }
+        }
         applyCustomSettings(fanboxSessionId,clientType)
     }
 }

@@ -30,6 +30,9 @@ import io.ktor.serialization.kotlinx.json.*
  * @Author CHH2000day
  * @Date 2023/2/1 16:51
  **/
+
+
+internal var proxyConfig:ProxyConfig?=null
 expect fun createHttpClient(fanboxSessionId: String, clientType: ClientType): HttpClient
 internal fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCustomSettings(
     fanboxSessionId: String,

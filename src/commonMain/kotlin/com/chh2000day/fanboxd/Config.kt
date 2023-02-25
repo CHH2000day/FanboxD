@@ -29,7 +29,8 @@ data class Config(
     var asDaemon: Boolean = true,
     var downloadFanbox: Boolean = true,
     var interval: Long = 180,
-    var downloadDir: String = "."
+    var downloadDir: String = ".",
+    var proxy: String?=null
 )
 
 @Serializable
@@ -38,5 +39,6 @@ data class NullableConfig(
     var asDaemon: Boolean? = null,
     var downloadFanbox: Boolean? = null,
     var interval: Int? = null,
-    var downloadDir: String? = null
+    var downloadDir: String? = null,
+    var proxy:String ?=null
 )
