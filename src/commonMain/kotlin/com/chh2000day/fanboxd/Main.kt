@@ -264,7 +264,7 @@ private fun parseProxyConfig(proxy:String?):ProxyConfig?{
             Logger.e { "Could not determine port:$proxy" }
             return null
         }
-        host=hostInfo.substring(0,lastIndexOfColon)
+        host=hostInfo.substring(0,lastIndexOfColon-1)
         val portStr=hostInfo.substring(lastIndexOfColon)
         port=portStr.toIntOrNull()?:run{
             Logger.e { "Failed to parse proxy:Invalid port:$portStr" }
