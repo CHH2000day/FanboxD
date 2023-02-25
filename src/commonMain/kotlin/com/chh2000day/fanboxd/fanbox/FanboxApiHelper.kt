@@ -89,7 +89,7 @@ object FanboxApiHelper {
             Logger.e(it) { "Failed to access fanbox api:" }
         }.getOrNull()
         while (result == null || result.hasError && errCounter < maxRetries) {
-            Logger.w { "Getting error from fanbox api.Consider to check your fanbox session id" }
+            Logger.w { "Getting errors from fanbox api.Consider to check your fanbox session id" }
             Logger.w { "Fanbox api error:${result?.error}" }
             errCounter++
             result = kotlin.runCatching { block() }.onFailure {
