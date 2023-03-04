@@ -100,7 +100,7 @@ private fun parseConfig(args: Array<String>): StartupConfig {
                         cmdLineArgs.downloadFanbox = true
                     }
 
-                    "no-download-fanbox" -> {
+                    "--no-download-fanbox" -> {
                         cmdLineArgs.downloadFanbox = false
                     }
 
