@@ -379,8 +379,8 @@ class FanboxD(private val startupConfig: StartupConfig) {
     }
 
     private suspend fun monitor() = coroutineScope {
+        delay(500L)
         while (isActive) {
-            delay(500L)
             val startTime = Clock.System.now()
             coroutineScope.launch {
                 Logger.i { "Getting update from fanbox" }
