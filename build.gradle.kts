@@ -18,8 +18,8 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 
 plugins {
-    kotlin("multiplatform") version "1.8.0"
-    kotlin("plugin.serialization") version "1.8.0"
+    kotlin("multiplatform") version "1.8.10"
+    kotlin("plugin.serialization") version "1.8.10"
 }
 
 group = "com.chh2000day.app"
@@ -62,7 +62,7 @@ kotlin {
                 implementation("io.ktor:ktor-client-core:2.2.3")
                 implementation("io.ktor:ktor-client-content-negotiation:2.2.3")
                 implementation("io.ktor:ktor-serialization-kotlinx-json:2.2.3")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0-RC")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
                 implementation("co.touchlab:kermit:1.2.2")
             }
