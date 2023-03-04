@@ -130,11 +130,6 @@ private fun parseConfig(args: Array<String>): StartupConfig {
             }
 
             ArgState.WAIT_FOR_PARAMETER -> {
-                if (startMode != LaunchMode.NORMAL) {
-                    extraArgs = arg.split(',')
-                    currentState = ArgState.WAIT_FOR_ARG
-                    continue
-                }
                 when (lastOption) {
                     Options.CONFIG -> {
                         runCatching {
@@ -176,8 +171,13 @@ private fun parseConfig(args: Array<String>): StartupConfig {
                         exit(ExitCode.RUNTIME_ERR.value)
                     }
 
-                    Options.DOWNLOAD_POSTS -> TODO()
-                    Options.DOWNLOAD_CREATORS -> TODO()
+                    Options.DOWNLOAD_POSTS,Options.DOWNLOAD_CREATORS -> {
+                        if (startMode != LaunchMode.NORMAL) {
+                            extraArgs = arg.split(',')
+                        }else{
+                            throw IllegalStateException("Internal Error")
+                        }
+                    }
                 }
                 //Update state
                 currentState = ArgState.WAIT_FOR_ARG
