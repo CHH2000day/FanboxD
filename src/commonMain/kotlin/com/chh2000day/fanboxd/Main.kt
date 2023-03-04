@@ -105,6 +105,7 @@ private fun parseConfig(args: Array<String>): StartupConfig {
                     }
 
                     "--download-post" -> {
+                        lastOption=Options.DOWNLOAD_POSTS
                         startMode = LaunchMode.DOWNLOAD_POST
                         currentState = ArgState.WAIT_FOR_PARAMETER
                         cmdLineArgs.downloadFanbox = true
@@ -112,11 +113,13 @@ private fun parseConfig(args: Array<String>): StartupConfig {
                     }
 
                     "--download-creator" -> {
+                        lastOption=Options.DOWNLOAD_CREATORS
                         startMode = LaunchMode.DOWNLOAD_CREATOR
                         currentState = ArgState.WAIT_FOR_PARAMETER
                         cmdLineArgs.downloadFanbox = true
                         cmdLineArgs.asDaemon = false
                     }
+
                     "--proxy" -> {
                         lastOption=Options.PROXY
                         currentState = ArgState.WAIT_FOR_PARAMETER
@@ -166,11 +169,6 @@ private fun parseConfig(args: Array<String>): StartupConfig {
                         cmdLineArgs.proxy=arg
                     }
 
-                    null -> {
-                        Logger.e { "Illegal state" }
-                        exit(ExitCode.RUNTIME_ERR.value)
-                    }
-
                     Options.DOWNLOAD_POSTS,Options.DOWNLOAD_CREATORS -> {
                         if (startMode != LaunchMode.NORMAL) {
                             extraArgs = arg.split(',')
@@ -178,6 +176,11 @@ private fun parseConfig(args: Array<String>): StartupConfig {
                             throw IllegalStateException("Internal Error")
                         }
                     }
+                    null -> {
+                        Logger.e { "Illegal state" }
+                        exit(ExitCode.RUNTIME_ERR.value)
+                    }
+
                 }
                 //Update state
                 currentState = ArgState.WAIT_FOR_ARG
