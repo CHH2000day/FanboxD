@@ -261,7 +261,7 @@ private fun parseProxyConfig(proxy:String?):ProxyConfig?{
     if (protocol.equals("http",true)){
         return ProxyBuilder.http(proxy)
     }
-    if (protocol.equals("socks5",true)){
+    if (protocol.equals("socks5",true)||protocol.equals("socks",true)){
         val lastIndexOfColon=hostInfo.lastIndexOf(':')+1
         if (lastIndexOfColon<1||lastIndexOfColon>=hostInfo.lastIndex){
             Logger.e { "Could not determine port:$proxy" }
