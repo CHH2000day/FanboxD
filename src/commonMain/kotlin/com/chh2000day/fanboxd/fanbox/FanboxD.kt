@@ -49,7 +49,7 @@ class FanboxD(private val startupConfig: StartupConfig) {
     private val config = startupConfig.config
     private val httpClient: HttpClient = createHttpClient(config.fanboxSessionId, ClientType.TYPE_DOWNLOADER)
     @OptIn(ExperimentalCoroutinesApi::class)
-    private val coroutineContext = newSingleThreadContext( "FanboxD Worker")
+    private val coroutineContext = Dispatchers.Default
     private val coroutineScope = CoroutineScope(coroutineContext)
     private val downloadDir = config.downloadDir.toPath(true)
     private val fileSystem = FileSystem.SYSTEM
