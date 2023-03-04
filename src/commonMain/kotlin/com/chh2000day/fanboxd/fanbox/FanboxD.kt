@@ -48,7 +48,8 @@ class FanboxD(private val startupConfig: StartupConfig) {
     private val bufferSize = 16 * 1024
     private val config = startupConfig.config
     private val httpClient: HttpClient = createHttpClient(config.fanboxSessionId, ClientType.TYPE_DOWNLOADER)
-    private val coroutineContext = newFixedThreadPoolContext(2, "FanboxD Worker")
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private val coroutineContext = newSingleThreadContext( "FanboxD Worker")
     private val coroutineScope = CoroutineScope(coroutineContext)
     private val downloadDir = config.downloadDir.toPath(true)
     private val fileSystem = FileSystem.SYSTEM
@@ -380,10 +381,11 @@ class FanboxD(private val startupConfig: StartupConfig) {
 
     private suspend fun monitor() = coroutineScope {
         delay(500L)
+        var lastSuccessCheckTime=Clock.System.now()
         while (isActive) {
-            val startTime = Clock.System.now()
             coroutineScope.launch {
                 Logger.i { "Getting update from fanbox" }
+                val checkTime=Clock.System.now()
                 val fanboxUpdateInfo = FanboxApiHelper.getFanboxUpdate()
                 if (fanboxUpdateInfo == null) {
                     Logger.e { "Failed to get update from fanbox" }
@@ -391,8 +393,9 @@ class FanboxD(private val startupConfig: StartupConfig) {
                 }
                 val updatePostInfo = fanboxUpdateInfo.fanboxUpdateBody.fanboxUpdateInfos
                 val postsShouldUpdate = updatePostInfo.filter {
-                    it.fanboxUpdatePostInfo.updatedDatetime.toInstant() >= startTime
+                    it.fanboxUpdatePostInfo.updatedDatetime.toInstant() >= lastSuccessCheckTime
                 }
+                lastSuccessCheckTime=checkTime
                 if (postsShouldUpdate.isEmpty()) {
                     Logger.i { "No update available" }
                 } else {
