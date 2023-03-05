@@ -393,7 +393,7 @@ class FanboxD(private val startupConfig: StartupConfig) {
                 }
                 val updatePostInfo = fanboxUpdateInfo.fanboxUpdateBody.fanboxUpdateInfos
                 val postsShouldUpdate = updatePostInfo.filter {
-                    it.fanboxUpdatePostInfo.updatedDatetime.toInstant() >= lastSuccessCheckTime
+                    it.notifiedDatetime.toInstant() >= lastSuccessCheckTime
                 }
                 lastSuccessCheckTime=checkTime
                 if (postsShouldUpdate.isEmpty()) {
