@@ -23,6 +23,7 @@ import com.chh2000day.fanboxd.enum.ExitCode
 import com.chh2000day.fanboxd.enum.LaunchMode
 import com.chh2000day.fanboxd.fanbox.struct.post.HtmlPostContentBody
 import com.chh2000day.fanboxd.fanbox.struct.post.JsonPostContentBody
+import com.chh2000day.fanboxd.json
 import io.ktor.client.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
@@ -30,6 +31,7 @@ import io.ktor.utils.io.*
 import kotlinx.coroutines.*
 import kotlinx.datetime.Clock
 import kotlinx.datetime.toInstant
+import kotlinx.serialization.encodeToString
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -48,6 +50,7 @@ class FanboxD(private val startupConfig: StartupConfig) {
     private val bufferSize = 16 * 1024
     private val config = startupConfig.config
     private val httpClient: HttpClient = createHttpClient(config.fanboxSessionId, ClientType.TYPE_DOWNLOADER)
+
     @OptIn(ExperimentalCoroutinesApi::class)
     private val coroutineContext = Dispatchers.Default
     private val coroutineScope = CoroutineScope(coroutineContext)
@@ -213,13 +216,14 @@ class FanboxD(private val startupConfig: StartupConfig) {
             val timeString = postsBody.updatedDatetime.replace(':', '-')
             val postFileWithTimeStamp = postDir / "post-${timeString}.json"
             kotlin.runCatching {
+                val content = json.encodeToString(json.parseToJsonElement(postComplex.originalContent))
                 val sink = fileSystem.sink(postFile, false).buffer()
                 sink.use {
-                    sink.writeUtf8(postComplex.originalContent)
+                    sink.writeUtf8(content)
                 }
                 val postWithTimeSink = fileSystem.sink(postFileWithTimeStamp, false).buffer()
                 postWithTimeSink.use {
-                    postWithTimeSink.writeUtf8(postComplex.originalContent)
+                    postWithTimeSink.writeUtf8(content)
                 }
                 return@runCatching
             }.onFailure {
@@ -381,11 +385,11 @@ class FanboxD(private val startupConfig: StartupConfig) {
 
     private suspend fun monitor() = coroutineScope {
         delay(500L)
-        var lastSuccessCheckTime=Clock.System.now()
+        var lastSuccessCheckTime = Clock.System.now()
         while (isActive) {
             coroutineScope.launch {
                 Logger.i { "Getting update from fanbox" }
-                val checkTime=Clock.System.now()
+                val checkTime = Clock.System.now()
                 val fanboxUpdateInfo = FanboxApiHelper.getFanboxUpdate()
                 if (fanboxUpdateInfo == null) {
                     Logger.e { "Failed to get update from fanbox" }
@@ -395,7 +399,7 @@ class FanboxD(private val startupConfig: StartupConfig) {
                 val postsShouldUpdate = updatePostInfo.filter {
                     it.notifiedDatetime.toInstant() >= lastSuccessCheckTime
                 }
-                lastSuccessCheckTime=checkTime
+                lastSuccessCheckTime = checkTime
                 if (postsShouldUpdate.isEmpty()) {
                     Logger.i { "No update available" }
                 } else {
