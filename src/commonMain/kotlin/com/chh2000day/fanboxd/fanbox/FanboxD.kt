@@ -389,17 +389,19 @@ class FanboxD(private val startupConfig: StartupConfig) {
         while (isActive) {
             coroutineScope.launch {
                 Logger.i { "Getting update from fanbox" }
-                val checkTime = Clock.System.now()
                 val fanboxUpdateInfo = FanboxApiHelper.getFanboxUpdate()
                 if (fanboxUpdateInfo == null) {
                     Logger.e { "Failed to get update from fanbox" }
                     return@launch
                 }
                 val updatePostInfo = fanboxUpdateInfo.fanboxUpdateBody.fanboxUpdateInfos
+                val latestPostUpdateTime = updatePostInfo.map {
+                    it.fanboxUpdatePostInfo.updatedDatetime.toInstant()
+                }.maxOrNull() ?: Clock.System.now()
                 val postsShouldUpdate = updatePostInfo.filter {
-                    it.notifiedDatetime.toInstant() >= lastSuccessCheckTime
+                    it.fanboxUpdatePostInfo.updatedDatetime.toInstant() >= lastSuccessCheckTime
                 }
-                lastSuccessCheckTime = checkTime
+                lastSuccessCheckTime = latestPostUpdateTime
                 if (postsShouldUpdate.isEmpty()) {
                     Logger.i { "No update available" }
                 } else {
