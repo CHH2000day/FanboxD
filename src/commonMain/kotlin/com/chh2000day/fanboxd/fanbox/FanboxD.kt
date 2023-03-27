@@ -406,11 +406,11 @@ class FanboxD(private val startupConfig: StartupConfig) {
                     Logger.i { "No update available" }
                 } else {
                     val postsList = postsShouldUpdate.filter { updateInfo ->
-                        updateInfo.fanboxUpdatePostInfo.isRestricted.also {
-                            if (!it) {
+                        val isRestricted=updateInfo.fanboxUpdatePostInfo.isRestricted
+                        if (isRestricted) {
                                 Logger.i { "No access to post:${updateInfo.fanboxUpdatePostInfo.id}.Skipping it." }
                             }
-                        }
+                        !isRestricted
                     }.map {
                         it.fanboxUpdatePostInfo.id
                     }
