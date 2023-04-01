@@ -213,7 +213,7 @@ class FanboxD(private val startupConfig: StartupConfig) {
         fun downloadBody(){
             val postFile = postDir / "post.json"
             val postFileWithTimeStamp = postDir / "post-${timeString}.json"
-            val contentFileWithTimeStamp=postDir/"post${timeString}_content.txt"
+            val contentFileWithTimeStamp=postDir/"post-${timeString}-content.txt"
             kotlin.runCatching {
                 val content = json.encodeToString(json.parseToJsonElement(postComplex.originalContent))
                 val postSink = fileSystem.sink(postFile, false).buffer()
