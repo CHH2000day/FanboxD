@@ -51,7 +51,6 @@ class FanboxD(private val startupConfig: StartupConfig) {
     private val config = startupConfig.config
     private val httpClient: HttpClient = createHttpClient(config.fanboxSessionId, ClientType.TYPE_DOWNLOADER)
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     private val coroutineContext = Dispatchers.Default
     private val coroutineScope = CoroutineScope(coroutineContext)
     private val downloadDir = config.downloadDir.toPath(true)
@@ -206,29 +205,58 @@ class FanboxD(private val startupConfig: StartupConfig) {
         val post = postComplex.post
         val postsBody = post.postBody
         val postDir = downloadDir / postsBody.creatorId / "posts" / postId
+        val timeString = postsBody.updatedDatetime.replace(':', '-')
         kotlin.runCatching { fileSystem.createDirectories(postDir, false) }.onFailure {
             Logger.e(it) { "Download post $post failed!Failed to create dir:$postDir" }
             return Result.FAILED
         }
-        //Write post content
-        coroutineScope.launch {
+        fun downloadBody(){
             val postFile = postDir / "post.json"
-            val timeString = postsBody.updatedDatetime.replace(':', '-')
             val postFileWithTimeStamp = postDir / "post-${timeString}.json"
+            val contentFileWithTimeStamp=postDir/"post${timeString}_content.txt"
             kotlin.runCatching {
                 val content = json.encodeToString(json.parseToJsonElement(postComplex.originalContent))
-                val sink = fileSystem.sink(postFile, false).buffer()
-                sink.use {
-                    sink.writeUtf8(content)
+                val postSink = fileSystem.sink(postFile, false).buffer()
+                postSink.use {
+                    postSink.writeUtf8(content)
                 }
                 val postWithTimeSink = fileSystem.sink(postFileWithTimeStamp, false).buffer()
                 postWithTimeSink.use {
-                    postWithTimeSink.writeUtf8(content)
+                    it.writeUtf8(content)
                 }
+                //Extract content to a txt file
+                val contentSink=fileSystem.sink(contentFileWithTimeStamp,false).buffer()
+                contentSink.use {sink->
+                    val postBody=postComplex.post.postBody
+                    sink.writeUtf8("${postBody.title} - ${postBody.creatorId} - ${postBody.feeRequired} \n")
+                    sink.writeUtf8("$timeString \n")
+                    sink.writeUtf8(postBody.tags.joinToString())
+                    sink.writeUtf8("\n")
+                    val contentBodyBlocks=postBody.body
+                    if (contentBodyBlocks!=null){
+                        if (contentBodyBlocks is JsonPostContentBody) {
+                            sink.writeUtf8("\n")
+                            contentBodyBlocks.blocks?.forEach {
+                                if (it.type=="p"){
+                                    sink.writeUtf8("\n")
+                                    sink.writeUtf8(it.text?:"")
+                                }
+                            }
+                        }else{
+                            Logger.w("Not supporting xml post content as this moment")
+                        }
+                    }
+                }
+                //Copy content
+                fileSystem.copy(contentFileWithTimeStamp,postDir/"post_content.txt")
                 return@runCatching
             }.onFailure {
                 Logger.e(it) { "Failed to write post file : $postFile  for post :$postId" }
             }
+        }
+        //Write post content
+        coroutineScope.launch {
+            downloadBody()
         }
         //Download other things
         val downloadTaskList = mutableListOf<Deferred<Boolean>>()
