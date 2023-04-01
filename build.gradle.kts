@@ -23,7 +23,7 @@ plugins {
 }
 
 group = "com.chh2000day.app"
-version = "0.3.12"
+version = "0.4.0"
 
 
 repositories {
