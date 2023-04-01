@@ -42,7 +42,9 @@ data class JsonPostContentBody(
     @SerialName("embedMap")
     val embedMap: Map<String, EmbedInfo>? = null,
     @SerialName("urlEmbedMap")
-    val urlEmbedMap: UrlEmbedInfo? = null
+    val urlEmbedMap: UrlEmbedInfo? = null,
+    @SerialName("text")
+    val text:String?=null
 ) : PostContentBody()
 
 @Serializable

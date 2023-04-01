@@ -236,6 +236,10 @@ class FanboxD(private val startupConfig: StartupConfig) {
                     if (contentBodyBlocks!=null){
                         if (contentBodyBlocks is JsonPostContentBody) {
                             sink.writeUtf8("\n")
+                            contentBodyBlocks.text?.let {
+                                sink.writeUtf8("\n")
+                                sink.writeUtf8(it)
+                            }
                             contentBodyBlocks.blocks?.forEach {
                                 if (it.type=="p"){
                                     sink.writeUtf8("\n")
