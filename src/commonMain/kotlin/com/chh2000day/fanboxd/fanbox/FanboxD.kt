@@ -210,7 +210,7 @@ class FanboxD(private val startupConfig: StartupConfig) {
             Logger.e(it) { "Download post $post failed!Failed to create dir:$postDir" }
             return Result.FAILED
         }
-        fun downloadBody(){
+        suspend fun downloadBody(){
             val postFile = postDir / "post.json"
             val postFileWithTimeStamp = postDir / "post-${timeString}.json"
             val contentFileWithTimeStamp=postDir/"post-${timeString}-content.txt"
@@ -234,8 +234,8 @@ class FanboxD(private val startupConfig: StartupConfig) {
                     sink.writeUtf8("\n")
                     val contentBodyBlocks=postBody.body
                     if (contentBodyBlocks!=null){
+                        sink.writeUtf8("\n")
                         if (contentBodyBlocks is JsonPostContentBody) {
-                            sink.writeUtf8("\n")
                             contentBodyBlocks.text?.let {
                                 sink.writeUtf8("\n")
                                 sink.writeUtf8(it)
@@ -247,7 +247,11 @@ class FanboxD(private val startupConfig: StartupConfig) {
                                 }
                             }
                         }else{
-                            Logger.w("Not supporting xml post content as this moment")
+                            contentBodyBlocks as HtmlPostContentBody
+                            contentBodyBlocks.getContent().forEach {
+                                sink.writeUtf8("\n")
+                                sink.writeUtf8(it)
+                            }
                         }
                     }
                 }
@@ -334,7 +338,6 @@ class FanboxD(private val startupConfig: StartupConfig) {
             return result
         } else {
             contentBody as HtmlPostContentBody
-            Logger.w { "No implementation for legacy fanbox post yet" }
             val thumbnails = contentBody.getThumbnailUrlList()
             thumbnails.forEachIndexed { index, thumbnailUrl ->
                 Logger.i { "Post:$postId:Downloading image:[${index + 1}/${thumbnails.size}]" }
@@ -343,17 +346,6 @@ class FanboxD(private val startupConfig: StartupConfig) {
                         thumbnailUrl,
                         thumbnailPath,
                         postId
-                    )
-                })
-            }
-            val images = contentBody.getFilesUrlList()
-            images.forEachIndexed { index, imageUrl ->
-                Logger.i { "Post:$postId:Downloading image:[${index + 1}/${images.size}]" }
-                downloadTaskList.add(coroutineScope.async {
-                    downloadFile(
-                        imageUrl,
-                        imagePath,
-                        postId,
                     )
                 })
             }
@@ -368,7 +360,11 @@ class FanboxD(private val startupConfig: StartupConfig) {
                     )
                 })
             }
-            return Result.PARTLY_SUCCESS
+            val result = downloadTaskList.awaitAll().getResult()
+            Logger.i {
+                "Post:$postId:Done!Result is " + result.result
+            }
+            return result
         }
     }
 
