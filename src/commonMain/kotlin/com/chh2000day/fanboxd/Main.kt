@@ -22,6 +22,7 @@ import com.chh2000day.fanboxd.enum.LaunchMode
 import com.chh2000day.fanboxd.fanbox.FanboxD
 import com.chh2000day.fanboxd.fanbox.proxyConfig
 import io.ktor.client.engine.*
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.toKString
 import kotlinx.serialization.SerializationException
 import okio.FileSystem
@@ -55,6 +56,7 @@ fun stopFanboxD() {
     exit(ExitCode.NORMAL.value)
 }
 
+@OptIn(ExperimentalForeignApi::class)
 private fun parseConfig(args: Array<String>): StartupConfig {
     //Handle args
     var currentState = ArgState.WAIT_FOR_ARG

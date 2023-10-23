@@ -19,6 +19,7 @@
 package com.chh2000day.fanboxd
 
 import com.chh2000day.fanboxd.enum.ExitCode
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.staticCFunction
 import platform.posix.SIGINT
 import platform.posix.SIGKILL
@@ -29,6 +30,7 @@ import platform.posix.signal
  * @Author CHH2000day
  * @Date 2023/2/6 0:04
  **/
+@OptIn(ExperimentalForeignApi::class)
 actual fun setTerminateHandler() {
     signal(SIGINT, staticCFunction(::stopCallBack))
     signal(SIGKILL, staticCFunction(::emerStopCallback))

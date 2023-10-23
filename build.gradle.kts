@@ -18,8 +18,8 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 
 plugins {
-    kotlin("multiplatform") version "1.8.10"
-    kotlin("plugin.serialization") version "1.8.10"
+    kotlin("multiplatform") version "1.9.10"
+    kotlin("plugin.serialization") version "1.9.10"
 }
 
 group = "com.chh2000day.app"
@@ -58,11 +58,11 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                implementation("com.squareup.okio:okio:3.3.0")
-                implementation("io.ktor:ktor-client-core:2.2.3")
-                implementation("io.ktor:ktor-client-content-negotiation:2.2.3")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:2.2.3")
-                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.5.0")
+                implementation("com.squareup.okio:okio:3.6.0")
+                implementation("io.ktor:ktor-client-core:2.3.5")
+                implementation("io.ktor:ktor-client-content-negotiation:2.3.5")
+                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.5")
+                implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.0")
                 implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
                 implementation("co.touchlab:kermit:1.2.2")
             }
@@ -71,14 +71,14 @@ kotlin {
         val linuxX64Main by getting {
             dependsOn(commonMain)
             dependencies {
-                implementation("io.ktor:ktor-client-curl:2.2.3")
+                implementation("io.ktor:ktor-client-curl:2.3.5")
             }
         }
         val linuxX64Test by getting
         val mingwX64Main by getting {
             dependsOn(commonMain)
             dependencies {
-                implementation("io.ktor:ktor-client-winhttp:2.2.3")
+                implementation("io.ktor:ktor-client-winhttp:2.3.5")
 //                implementation("io.ktor:ktor-client-curl:2.2.2")
             }
         }

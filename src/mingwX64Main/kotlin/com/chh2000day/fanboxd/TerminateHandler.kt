@@ -17,6 +17,7 @@
 package com.chh2000day.fanboxd
 
 import com.chh2000day.fanboxd.enum.ExitCode
+import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.staticCFunction
 import platform.posix.exit
 import platform.windows.*
@@ -25,6 +26,7 @@ import platform.windows.*
  * @Author CHH2000day
  * @Date 2023/2/6 0:04
  **/
+@OptIn(ExperimentalForeignApi::class)
 actual fun setTerminateHandler() {
     SetConsoleCtrlHandler(staticCFunction(::terminateCallback), TRUE)
 }
