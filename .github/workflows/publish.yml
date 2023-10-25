@@ -33,7 +33,7 @@ jobs:
       - name: Install curl-dev
         run: sudo apt-get update&&sudo apt-get -y install libcurl4-openssl-dev
       - name: Build with Gradle
-        uses: gradle/gradle-build-action@v2.3.3
+        uses: gradle/gradle-build-action@v2
         with:
           arguments: linkReleaseExecutableLinuxX64
 
@@ -68,7 +68,7 @@ jobs:
           settings-path: ${{ github.workspace }} # location for the settings.xml file
 
       - name: Build with Gradle
-        uses: gradle/gradle-build-action@v2.3.3
+        uses: gradle/gradle-build-action@v2
         with:
           arguments: linkReleaseExecutableMingwX64
 
