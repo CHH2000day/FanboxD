@@ -18,8 +18,8 @@
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTargetWithHostTests
 
 plugins {
-    kotlin("multiplatform") version "1.9.10"
-    kotlin("plugin.serialization") version "1.9.10"
+    kotlin("multiplatform") version "1.9.20"
+    kotlin("plugin.serialization") version "1.9.20"
 }
 
 group = "com.chh2000day.app"
