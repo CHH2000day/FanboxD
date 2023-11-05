@@ -46,7 +46,7 @@ kotlin {
     val targets = mutableListOf<KotlinNativeTargetWithHostTests>()
     targets.add(linuxX64())
     targets.add(mingwX64())
-    targets.forEach() { target ->
+    targets.forEach { target ->
         target.apply {
             binaries {
                 executable {
@@ -69,14 +69,12 @@ kotlin {
         }
         val commonTest by getting
         val linuxX64Main by getting {
-            dependsOn(commonMain)
             dependencies {
                 implementation("io.ktor:ktor-client-curl:2.3.5")
             }
         }
         val linuxX64Test by getting
         val mingwX64Main by getting {
-            dependsOn(commonMain)
             dependencies {
                 implementation("io.ktor:ktor-client-winhttp:2.3.5")
 //                implementation("io.ktor:ktor-client-curl:2.2.2")
