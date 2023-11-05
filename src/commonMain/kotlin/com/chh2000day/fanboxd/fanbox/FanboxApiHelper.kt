@@ -57,8 +57,7 @@ object FanboxApiHelper {
 
     private lateinit var httpClient: HttpClient
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    private val coroutineContext = newSingleThreadContext("API worker")
+    private val coroutineContext = Dispatchers.IO
     private val coroutineScope = CoroutineScope(coroutineContext)
     private val tokenChannel = Channel<Long>(3, BufferOverflow.DROP_OLDEST)
     private val random = Random.Default

@@ -71,10 +71,8 @@ internal fun <T : HttpClientEngineConfig> HttpClientConfig<T>.applyCustomSetting
     install(ContentNegotiation) {
         this.json(json)
     }
-    //2 threads for api is well enough
     if (clientType == ClientType.TYPE_API){
         engine {
-            this.threadsCount=2
         }
     }
 }
